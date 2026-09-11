@@ -17,7 +17,7 @@ const body = Outfit({
 export const metadata: Metadata = {
   title: "Whenever — a family album for any century",
   description:
-    "Upload a few photographs of your people. Pick any stretch of years. Get a twenty-page album back — $20, one album, no subscription.",
+    "Upload a few photographs of your people. Pick any stretch of years. Get a twenty-page album back — they age as time moves.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

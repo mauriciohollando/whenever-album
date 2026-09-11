@@ -8,7 +8,7 @@ import type { AlbumDraftInput, AlbumEvent, AlbumYear, FamilyMember, PublicAlbum 
 import { formatWindow, windowError } from "@/lib/years";
 import { newClientId } from "@/lib/clientId";
 
-const STEPS = ["People", "Years", "Happenings", "Mood", "Pay"] as const;
+const STEPS = ["People", "Years", "Happenings", "Mood", "Create"] as const;
 
 export function AlbumMaker({
   initialAlbum,
@@ -176,7 +176,7 @@ export function AlbumMaker({
             </button>
           ) : (
             <button type="button" className="btn-rust" disabled={busy} onClick={pay}>
-              {busy ? "Opening the till…" : `Pay $${SITE_PRICE_USD}`}
+              {busy ? "Opening checkout…" : `Pay $${SITE_PRICE_USD} and create`}
             </button>
           )}
           <button type="button" className="text-sm text-[var(--muted)]" onClick={() => router.push("/")}>
@@ -485,9 +485,9 @@ function PayStep({
 }) {
   return (
     <div className="mt-6">
-      <h2 className="display text-4xl">Twenty dollars, then we develop it</h2>
+      <h2 className="display text-4xl">${SITE_PRICE_USD} to create this album</h2>
       <p className="mt-2 max-w-xl text-[var(--muted)]">
-        Stripe takes the card. You land back on your album while the pages come out of the tray.
+        One payment. Then we develop the twenty pages and send you back to them.
       </p>
       <dl className="mt-6 grid gap-3 text-[var(--ink)]">
         <div>

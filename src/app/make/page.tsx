@@ -26,7 +26,7 @@ export default async function MakePage({
         <p className="kicker mt-10">album brief</p>
         <h1 className="display mt-3 text-6xl sm:text-7xl">Tell us the years</h1>
         <p className="mt-4 max-w-xl text-lg leading-relaxed text-[var(--muted)]">
-          Faces, a window of time, the chapters. Twenty dollars at the end.
+          Faces, a window of time, the chapters. Then we develop the pages.
         </p>
         <div className="mt-8">
           <AlbumMaker

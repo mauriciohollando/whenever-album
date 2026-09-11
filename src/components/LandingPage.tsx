@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { EXAMPLE_ALBUMS, GUESTBOOK, REVIEWS } from "@/lib/examples";
+import { EXAMPLE_ALBUMS } from "@/lib/examples";
 import { exampleCoverPhotos } from "@/lib/exampleAlbums";
-import { SITE_PRICE_USD } from "@/lib/site";
 import { SiteFooter, SiteHeader } from "./SiteChrome";
 
 const YEARS = ["500 BC", "1099", "1948", "1956", "1971", "2076", "2112"];
@@ -12,7 +11,7 @@ export function LandingPage() {
       <SiteHeader />
       <main>
         <section className="px-5 pb-12 pt-10 sm:px-8 sm:pt-16 lg:px-12">
-          <p className="kicker">AI family album · ${SITE_PRICE_USD}</p>
+          <p className="kicker">AI family album</p>
           <h1 className="display hero-type mt-4 max-w-4xl">
             Your people.
             <br />
@@ -24,10 +23,10 @@ export function LandingPage() {
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link href="/make" className="btn-rust text-base">
-              Make one for ${SITE_PRICE_USD}
+              Make an album
             </Link>
             <a href="#examples" className="text-sm text-[var(--muted)] underline decoration-[var(--line)] underline-offset-4 hover:text-[var(--ink)]">
-              Flip a sample album
+              Flip a sample
             </a>
           </div>
           <div className="year-row mt-12">
@@ -89,40 +88,14 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="grid gap-px border-y border-[var(--line)] bg-[var(--line)] md:grid-cols-2">
-          {REVIEWS.map((review) => (
-            <blockquote key={review.name} className="bg-[var(--bg)] px-5 py-10 sm:px-8 sm:py-12">
-              <p className="display text-3xl leading-tight sm:text-[2.1rem]">“{review.text}”</p>
-              <footer className="mt-5 text-sm uppercase tracking-[0.14em] text-[var(--muted)]">
-                {review.name} · {review.place}
-              </footer>
-            </blockquote>
-          ))}
-        </section>
-
-        <section id="notes" className="scroll-mt-24 px-5 py-16 sm:px-8 lg:px-12">
-          <p className="kicker">notes on the inside cover</p>
-          <h2 className="display mt-3 text-5xl">People keep writing back</h2>
-          <ul className="mt-10 grid gap-4 sm:grid-cols-2">
-            {GUESTBOOK.map((row) => (
-              <li key={row.name} className="album-board p-6">
-                <p className="kicker">{row.name}</p>
-                <p className="mt-3 text-[var(--muted)]">{row.note}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
         <section className="px-5 pb-16 sm:px-8 lg:px-12">
           <div className="album-board px-6 py-14 text-center sm:px-12">
-            <p className="kicker">one product</p>
+            <p className="kicker">your turn</p>
             <h2 className="display mx-auto mt-3 max-w-2xl text-5xl sm:text-6xl">
-              Twenty dollars.
-              <br />
-              Twenty pages.
+              Make one with your people
             </h2>
             <p className="mx-auto mt-5 max-w-lg text-[var(--muted)]">
-              No packs. No membership. You pay once, we develop the album, you keep the link.
+              Faces, years, a few chapters. Then we develop the pages.
             </p>
             <Link href="/make" className="btn-rust mt-8">
               Start yours

@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { AlbumViewer } from "@/components/AlbumViewer";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { EXAMPLE_ALBUMS, exampleToPublicAlbum, getExampleAlbum } from "@/lib/exampleAlbums";
-import { SITE_PRICE_USD } from "@/lib/site";
 
 export function generateStaticParams() {
   return EXAMPLE_ALBUMS.map((album) => ({ id: album.id }));
@@ -42,7 +41,7 @@ export default async function ExampleAlbumPage({
             <p className="mt-2 max-w-xl text-[var(--muted)]">{album.place}</p>
           </div>
           <Link href="/make" className="btn-rust">
-            Make yours for ${SITE_PRICE_USD}
+            Make yours
           </Link>
         </div>
         <AlbumViewer album={exampleToPublicAlbum(album)} titleOverride={album.family} />

@@ -117,15 +117,17 @@ export function AlbumMaker({
   }
 
   return (
-    <div className="album-board p-4 sm:p-7">
-      <div className="paper-grain p-5 sm:p-8">
-        <ol className="flex flex-wrap gap-3 text-sm text-[#7a6550]">
+    <div className="album-board p-5 sm:p-8">
+        <div className="progress-bar mb-6">
+          <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+        </div>
+        <ol className="flex flex-wrap gap-3 text-sm text-white/35">
           {STEPS.map((label, i) => (
-            <li key={label} className={i === step ? "text-[#9b3a22]" : ""}>
-              <button type="button" onClick={() => i < step && setStep(i)} className="hand text-xl">
+            <li key={label} className={i === step ? "text-[var(--accent)]" : ""}>
+              <button type="button" onClick={() => i < step && setStep(i)} className="font-medium">
                 {label}
               </button>
-              {i < STEPS.length - 1 ? <span className="mx-2 text-[#c9b89a]">/</span> : null}
+              {i < STEPS.length - 1 ? <span className="mx-2 text-white/15">/</span> : null}
             </li>
           ))}
         </ol>
@@ -151,7 +153,7 @@ export function AlbumMaker({
           />
         )}
 
-        {error && <p className="mt-6 text-[#9b3a22]">{error}</p>}
+        {error && <p className="mt-6 text-[var(--accent)]">{error}</p>}
 
         <div className="mt-8 flex flex-wrap gap-3">
           {step > 0 && (
@@ -168,11 +170,10 @@ export function AlbumMaker({
               {busy ? "Opening the till…" : `Pay $${SITE_PRICE_USD}`}
             </button>
           )}
-          <button type="button" className="text-sm text-[#7a6550]" onClick={() => router.push("/")}>
+          <button type="button" className="text-sm text-white/40" onClick={() => router.push("/")}>
             Leave it for later
           </button>
         </div>
-      </div>
     </div>
   );
 }
@@ -214,32 +215,32 @@ function PeopleStep({
   return (
     <div className="mt-6">
       <h2 className="display text-4xl">Who’s in the picture?</h2>
-      <p className="mt-2 max-w-xl text-[#5a4636]">
+      <p className="mt-2 max-w-xl text-white/50">
         Up to six people. A few photographs each — faces help more than group shots, but both are fine.
       </p>
       <div className="mt-6 grid gap-6">
         {members.map((member, i) => (
-          <section key={member.id} className="border-t border-[#2a1b12]/10 pt-5">
+          <section key={member.id} className="border-t border-white/10 pt-5">
             <div className="flex items-center justify-between">
-              <p className="hand text-xl text-[#9b3a22]">Person {i + 1}</p>
+              <p className="text-sm font-medium text-[var(--accent)]">Person {i + 1}</p>
               {members.length > 1 && (
                 <button
                   type="button"
-                  className="text-sm text-[#7a6550]"
+                  className="text-sm text-white/40"
                   onClick={() => setMembers(members.filter((m) => m.id !== member.id))}
                 >
                   Remove
                 </button>
               )}
             </div>
-            <label className="mt-3 block text-sm text-[#7a6550]">Name</label>
+            <label className="mt-3 block text-sm text-white/40">Name</label>
             <input
               className="field"
               value={member.name}
               onChange={(e) => update(member.id, { name: e.target.value })}
               placeholder="Nora, or Uncle Levi, or the baby"
             />
-            <label className="mt-4 block text-sm text-[#7a6550]">A little about them</label>
+            <label className="mt-4 block text-sm text-white/40">A little about them</label>
             <textarea
               className="area"
               value={member.description}
@@ -265,7 +266,7 @@ function PeopleStep({
                 </div>
               ))}
               {member.photos.length < MAX_PHOTOS_PER_MEMBER && (
-                <label className="grid h-20 w-20 cursor-pointer place-items-center border border-dashed border-[#2a1b12]/25 text-xs text-[#7a6550]">
+                <label className="grid h-20 w-20 cursor-pointer place-items-center border border-dashed border-white/15 text-xs text-white/40">
                   Add photo
                   <input
                     type="file"
@@ -318,14 +319,14 @@ function YearsStep({
   return (
     <div className="mt-6">
       <h2 className="display text-4xl">What years should we pretend?</h2>
-      <p className="mt-2 max-w-xl text-[#5a4636]">
+      <p className="mt-2 max-w-xl text-white/50">
         Five years minimum, sixty maximum. The photographs will use the real texture of those years — wool, Kodachrome, orbital trams, whatever fits.
       </p>
       <div className="mt-8 grid gap-8 sm:grid-cols-2">
         <YearFields label="From" value={start} onChange={setStart} />
         <YearFields label="Through" value={end} onChange={setEnd} />
       </div>
-      <p className="hand mt-6 text-2xl text-[#9b3a22]">
+      <p className="display mt-6 text-3xl">
         {problem ? problem : `That’s ${formatWindow(start, end)}.`}
       </p>
     </div>
@@ -343,7 +344,7 @@ function YearFields({
 }) {
   return (
     <fieldset>
-      <legend className="text-sm uppercase tracking-[0.14em] text-[#7a6550]">{label}</legend>
+      <legend className="text-sm uppercase tracking-[0.14em] text-white/40">{label}</legend>
       <input
         className="field display text-4xl"
         inputMode="numeric"
@@ -377,17 +378,17 @@ function EventsStep({
   return (
     <div className="mt-6">
       <h2 className="display text-4xl">What happened, or should have?</h2>
-      <p className="mt-2 max-w-xl text-[#5a4636]">
+      <p className="mt-2 max-w-xl text-white/50">
         Up to ten. A trip, a conquest, a Tuesday. Name it and say what it was.
       </p>
       <div className="mt-6 grid gap-5">
         {events.map((event, i) => (
-          <section key={event.id} className="border-t border-[#2a1b12]/10 pt-4">
+          <section key={event.id} className="border-t border-white/10 pt-4">
             <div className="flex justify-between">
-              <p className="hand text-xl text-[#9b3a22]">Event {i + 1}</p>
+              <p className="text-sm font-medium text-[var(--accent)]">Event {i + 1}</p>
               <button
                 type="button"
-                className="text-sm text-[#7a6550]"
+                className="text-sm text-white/40"
                 onClick={() => setEvents(events.filter((e) => e.id !== event.id))}
               >
                 Remove
@@ -437,7 +438,7 @@ function TagsStep({ tags, setTags }: { tags: string[]; setTags: (t: string[]) =>
   return (
     <div className="mt-6">
       <h2 className="display text-4xl">What’s the mood?</h2>
-      <p className="mt-2 max-w-xl text-[#5a4636]">
+      <p className="mt-2 max-w-xl text-white/50">
         Pick up to three. They lean on the whole album — funny, formal, mythic, a quiet journal.
       </p>
       <div className="mt-6 flex flex-wrap gap-2">
@@ -453,7 +454,7 @@ function TagsStep({ tags, setTags }: { tags: string[]; setTags: (t: string[]) =>
           </button>
         ))}
       </div>
-      <p className="hand mt-5 text-xl text-[#7a6550]">
+      <p className="mt-5 text-white/50">
         {tags.length ? tags.join(" · ") : "None yet — candid will do."}
       </p>
     </div>
@@ -476,24 +477,24 @@ function PayStep({
   return (
     <div className="mt-6">
       <h2 className="display text-4xl">Twenty dollars, then we develop it</h2>
-      <p className="mt-2 max-w-xl text-[#5a4636]">
+      <p className="mt-2 max-w-xl text-white/50">
         Stripe takes the card. You land back on your album while the pages come out of the tray.
       </p>
-      <dl className="mt-6 grid gap-3 text-[#3d2a1f]">
+      <dl className="mt-6 grid gap-3 text-white/80">
         <div>
-          <dt className="text-sm uppercase tracking-[0.14em] text-[#7a6550]">People</dt>
+          <dt className="text-sm uppercase tracking-[0.14em] text-white/40">People</dt>
           <dd>{members.map((m) => m.name || "unnamed").join(", ")}</dd>
         </div>
         <div>
-          <dt className="text-sm uppercase tracking-[0.14em] text-[#7a6550]">Years</dt>
+          <dt className="text-sm uppercase tracking-[0.14em] text-white/40">Years</dt>
           <dd>{formatWindow(start, end)}</dd>
         </div>
         <div>
-          <dt className="text-sm uppercase tracking-[0.14em] text-[#7a6550]">Events</dt>
+          <dt className="text-sm uppercase tracking-[0.14em] text-white/40">Events</dt>
           <dd>{events.length ? events.map((e) => e.name || "untitled").join(" · ") : "None named"}</dd>
         </div>
         <div>
-          <dt className="text-sm uppercase tracking-[0.14em] text-[#7a6550]">Mood</dt>
+          <dt className="text-sm uppercase tracking-[0.14em] text-white/40">Mood</dt>
           <dd>{tags.length ? tags.join(" · ") : "Candid"}</dd>
         </div>
       </dl>

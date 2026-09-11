@@ -1,32 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --table: #2c1c14;
-  --table-edge: #1a100c;
-  --paper: #f3e6cf;
-  --paper-deep: #e4d2b0;
-  --linen: #f7efe0;
-  --ink: #2a1b12;
-  --ink-soft: #5a4636;
-  --rust: #9b3a22;
-  --rust-deep: #722616;
-  --brass: #b0894a;
-  --sage: #5f6d52;
-  --photo-white: #f8f3ea;
-  --shadow: rgba(20, 10, 6, 0.35);
+  --bg: #07070a;
+  --surface: #111114;
+  --surface-2: #18181d;
+  --ink: #f3f1ea;
+  --muted: #8e8a82;
+  --line: rgba(255, 255, 255, 0.08);
+  --accent: #ff3b1f;
+  --accent-deep: #d42610;
+  --glow: #ffb199;
 }
 
 @theme inline {
-  --color-table: var(--table);
-  --color-paper: var(--paper);
-  --color-linen: var(--linen);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
   --color-ink: var(--ink);
-  --color-rust: var(--rust);
-  --color-brass: var(--brass);
-  --color-sage: var(--sage);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
   --font-display: var(--font-display);
   --font-body: var(--font-body);
-  --font-hand: var(--font-hand);
 }
 
 * {
@@ -40,11 +33,9 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(1200px 700px at 20% 0%, rgba(176, 137, 74, 0.12), transparent 50%),
-    linear-gradient(180deg, #3a261b 0%, var(--table) 40%, var(--table-edge) 100%);
+  background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-body), "Source Serif 4", Georgia, serif;
+  font-family: var(--font-body), Outfit, system-ui, sans-serif;
 }
 
 a {
@@ -58,107 +49,170 @@ select {
   font: inherit;
 }
 
-.paper-grain {
-  background-color: var(--paper);
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(80, 50, 20, 0.06) 1px, transparent 0);
-  background-size: 3px 3px;
+.display {
+  font-family: var(--font-display), Syne, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
 }
 
-.album-board {
-  background:
-    linear-gradient(180deg, rgba(255, 250, 240, 0.35), transparent 30%),
-    #d7bc8f;
-  box-shadow:
-    0 18px 50px var(--shadow),
-    inset 0 0 0 1px rgba(90, 60, 30, 0.22);
-  border-radius: 2px;
+::placeholder {
+  color: rgba(243, 241, 234, 0.3);
+}
+
+.hand,
+.kicker {
+  font-family: var(--font-body), Outfit, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--accent);
+}
+
+.glass-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(18px);
+  background: rgba(7, 7, 10, 0.72);
+  border-bottom: 1px solid var(--line);
+}
+
+.hero-type {
+  font-size: clamp(3.4rem, 12vw, 8.4rem);
+}
+
+.marquee {
+  overflow: hidden;
+  border-block: 1px solid var(--line);
+  background: #0c0c10;
+}
+
+.marquee-track {
+  display: flex;
+  gap: 2.5rem;
+  width: max-content;
+  animation: ticker 28s linear infinite;
+  padding: 0.85rem 0;
+  font-family: var(--font-display), Syne, sans-serif;
+  font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .photo-plate {
-  background: var(--photo-white);
-  padding: 0.55rem 0.55rem 1.4rem;
-  box-shadow: 0 10px 24px rgba(40, 20, 10, 0.22);
-  transform: rotate(var(--tilt, 0deg));
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
 }
 
 .photo-plate .slot {
   aspect-ratio: 1;
-  background:
-    linear-gradient(160deg, #c9b89a, #8a6e4e 55%, #5a4330);
   overflow: hidden;
+  border-radius: 1.15rem;
+  background: #1a1a1e;
+}
+
+.photo-plate .slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.photo-plate:hover .slot img {
+  transform: scale(1.05);
 }
 
 .photo-plate figcaption {
-  font-family: var(--font-hand), "Caveat", cursive;
-  font-size: 1.15rem;
-  line-height: 1.2;
-  margin-top: 0.45rem;
-  color: var(--ink-soft);
-}
-
-.corner {
   position: absolute;
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid rgba(70, 45, 25, 0.45);
-  background: transparent;
+  left: 0.85rem;
+  right: 0.85rem;
+  bottom: 0.85rem;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(7, 7, 10, 0.72);
+  backdrop-filter: blur(10px);
+  font-size: 0.92rem;
+  letter-spacing: -0.02em;
 }
 
-.hand {
-  font-family: var(--font-hand), "Caveat", cursive;
+.photo-plate figcaption span {
+  color: var(--accent);
 }
 
-.display {
-  font-family: var(--font-display), Fraunces, Georgia, serif;
-  font-weight: 600;
+.paper-grain,
+.album-board,
+.page-leaf {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  box-shadow: none;
 }
 
-.rule {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(80, 50, 25, 0.35), transparent);
+.page-leaf {
+  min-height: 28rem;
 }
 
 .tag-chip {
-  border: 1px dashed rgba(80, 50, 25, 0.35);
-  background: rgba(255, 250, 240, 0.5);
-  padding: 0.2rem 0.65rem;
-  font-size: 0.85rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  border-radius: 999px;
+  color: var(--muted);
 }
 
 .tag-chip[data-on="true"] {
-  background: #f3d9b0;
-  border-style: solid;
-  border-color: var(--rust);
-  color: var(--rust-deep);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 .field {
   width: 100%;
   border: 0;
-  border-bottom: 1px solid rgba(80, 50, 25, 0.35);
+  border-bottom: 1px solid var(--line);
   background: transparent;
-  padding: 0.45rem 0;
+  padding: 0.7rem 0;
   color: var(--ink);
 }
 
 .field:focus {
   outline: none;
-  border-bottom-color: var(--rust);
+  border-bottom-color: var(--accent);
 }
 
 .area {
   width: 100%;
-  border: 1px solid rgba(80, 50, 25, 0.25);
-  background: rgba(255, 250, 240, 0.45);
-  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  padding: 0.85rem 0.95rem;
   color: var(--ink);
   resize: vertical;
   min-height: 5rem;
+  border-radius: 0.9rem;
 }
 
 .area:focus {
-  outline: 1px solid var(--rust);
+  outline: 1px solid var(--accent);
 }
 
 .btn-rust {
@@ -166,53 +220,95 @@ select {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: var(--rust);
-  color: #f8efe4;
+  background: var(--accent);
+  color: #fff;
   border: 0;
-  padding: 0.85rem 1.3rem;
-  letter-spacing: 0.02em;
+  padding: 0.95rem 1.35rem;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   cursor: pointer;
 }
 
 .btn-rust:hover {
-  background: var(--rust-deep);
+  background: var(--accent-deep);
 }
 
 .btn-rust:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn-ghost {
   background: transparent;
-  border: 1px solid rgba(80, 50, 25, 0.35);
+  border: 1px solid var(--line);
   color: var(--ink);
-  padding: 0.7rem 1.1rem;
+  padding: 0.8rem 1.15rem;
+  border-radius: 999px;
   cursor: pointer;
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 250, 240, 0.4);
-}
-
-.page-leaf {
-  background: var(--linen);
-  box-shadow: 0 16px 40px rgba(20, 10, 6, 0.28);
-  min-height: 28rem;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .lightbox {
   position: fixed;
   inset: 0;
-  background: rgba(16, 8, 5, 0.82);
+  background: rgba(5, 5, 8, 0.88);
   z-index: 50;
   display: grid;
   place-items: center;
   padding: 1.5rem;
+  backdrop-filter: blur(12px);
 }
 
-@media (max-width: 720px) {
-  .photo-plate {
-    padding: 0.4rem 0.4rem 1.1rem;
-  }
+.hero-photo {
+  border-radius: 1.4rem;
+  overflow: hidden;
+  background: #111;
+}
+
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stack-a {
+  width: 78%;
+  aspect-ratio: 1;
+}
+
+.stack-b {
+  position: absolute;
+  width: 46%;
+  aspect-ratio: 1;
+  right: 0;
+  bottom: -8%;
+}
+
+.stack-c {
+  position: absolute;
+  width: 32%;
+  aspect-ratio: 1;
+  left: -4%;
+  bottom: 8%;
+}
+
+.progress-bar {
+  height: 3px;
+  background: var(--line);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
 }

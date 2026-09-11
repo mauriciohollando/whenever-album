@@ -57,9 +57,9 @@ export function AlbumExperience({
   return (
     <div>
       {album.status === "draft" && (
-        <p className="mb-4 text-[#f3e6cf]">This album has not been paid for yet.</p>
+        <p className="mb-4 text-white/55">This album has not been paid for yet.</p>
       )}
-      {error && <p className="mb-4 text-[#e8c48a]">{error}</p>}
+      {error && <p className="mb-4 text-[var(--accent)]">{error}</p>}
       <AlbumViewer album={album} developing={developing} progress={progress} />
     </div>
   );

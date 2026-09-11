@@ -1,25 +1,17 @@
 import type { Metadata } from "next";
-import { Caveat, Fraunces, Source_Serif_4 } from "next/font/google";
+import { Outfit, Syne } from "next/font/google";
 import "./globals.css";
 
-const display = Fraunces({
+const display = Syne({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["600", "700"],
-  adjustFontFallback: false,
+  weight: ["600", "700", "800"],
 });
 
-const body = Source_Serif_4({
+const body = Outfit({
   variable: "--font-body",
   subsets: ["latin"],
-  adjustFontFallback: false,
-});
-
-const hand = Caveat({
-  variable: "--font-hand",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  adjustFontFallback: false,
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -30,10 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${display.variable} ${body.variable} ${hand.variable} h-full`}
-    >
+    <html lang="en" className={`${display.variable} ${body.variable} h-full`}>
       <body className="min-h-full antialiased">{children}</body>
     </html>
   );

@@ -41,9 +41,9 @@ export default async function AlbumPage({
     return (
       <div className="min-h-full">
         <SiteHeader />
-        <main className="mx-auto max-w-xl px-5 py-16 text-[#f3e6cf]">
-          <h1 className="display text-4xl">We cannot find that album</h1>
-          <p className="mt-3 text-[#f3e6cf]/75">
+        <main className="mx-auto max-w-xl px-5 py-16">
+          <h1 className="display text-5xl">We cannot find that album</h1>
+          <p className="mt-3 text-white/55">
             The link needs the private token from checkout. If you lost it, start a new one.
           </p>
           <Link href="/make" className="btn-rust mt-6 inline-flex">
@@ -62,10 +62,10 @@ export default async function AlbumPage({
       <SiteHeader quiet />
       <main className="mx-auto max-w-4xl px-5 pb-16 sm:px-8">
         {album.status !== "draft" && q.checkout === "success" && (
-          <p className="hand mb-4 text-2xl text-[#e8c48a]">Paid. The tray is warm.</p>
+          <p className="kicker mb-4">Paid. Developing now.</p>
         )}
         {album.status === "draft" && q.checkout === "success" && (
-          <p className="mb-4 text-[#e8c48a]">
+          <p className="mb-4 text-[var(--accent)]">
             Payment is clearing. Refresh in a moment if the pages do not start.
           </p>
         )}

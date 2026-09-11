@@ -29,12 +29,12 @@ export function AlbumViewer({
 
   if (!current) {
     return (
-      <div className="page-leaf paper-grain grid min-h-[28rem] place-items-center p-8 text-center">
+      <div className="page-leaf grid min-h-[28rem] place-items-center p-8 text-center">
         <div>
-          <p className="display text-3xl">The pages are still blank</p>
-          <p className="mt-2 text-[#5a4636]">
+          <p className="display text-4xl">Developing</p>
+          <p className="mt-3 text-white/50">
             {developing
-              ? "We are laying out the album first — names, years, the order of things."
+              ? "Laying out names, years, and the order of things."
               : "Nothing to turn yet."}
           </p>
         </div>
@@ -42,34 +42,41 @@ export function AlbumViewer({
     );
   }
 
+  const pct =
+    developing && progress && progress.total
+      ? Math.round((progress.done / progress.total) * 100)
+      : null;
+
   return (
     <div>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3 text-[#f3e6cf]">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="hand text-xl text-[#e8c48a]">{formatWindow(album.start, album.end)}</p>
-          <h1 className="display text-4xl">{title}</h1>
+          <p className="kicker">{formatWindow(album.start, album.end)}</p>
+          <h1 className="display mt-2 text-5xl">{title}</h1>
         </div>
-        <p className="text-sm text-[#f3e6cf]/70">
-          {developing && progress
-            ? `Developing ${progress.done} of ${progress.total}`
-            : `Page ${current.index} of ${pages.length}`}
+        <p className="text-sm text-white/45">
+          {pct != null ? `${progress?.done}/${progress?.total} photographs` : `Page ${current.index} / ${pages.length}`}
         </p>
       </div>
 
-      <div className="page-leaf paper-grain p-5 sm:p-8">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="display text-3xl">{current.heading}</h2>
-          <span className="hand text-xl text-[#7a6550]">{current.index}</span>
+      {pct != null && (
+        <div className="progress-bar mb-6">
+          <span style={{ width: `${pct}%` }} />
         </div>
-        <div className={`mt-6 grid gap-4 ${gridClass(current)}`}>
-          {current.photos.map((photo, i) => (
+      )}
+
+      <div className="page-leaf p-5 sm:p-8">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="display text-3xl sm:text-4xl">{current.heading}</h2>
+          <span className="text-white/35">{current.index}</span>
+        </div>
+        <div className={`mt-6 grid gap-3 ${gridClass(current)}`}>
+          {current.photos.map((photo) => (
             <PhotoPlate
               key={photo.id}
               title={photo.title}
               year={photo.yearLabel}
               src={photo.imageUrl}
-              tilt={i % 2 === 0 ? -1.4 : 1.8}
-              stain={page + i}
               onClick={() => setOpen(photo)}
             />
           ))}
@@ -88,44 +95,42 @@ export function AlbumViewer({
       <div className="mt-5 flex items-center justify-between gap-3">
         <button
           type="button"
-          className="btn-ghost text-[#f3e6cf] border-[#f3e6cf]/30"
+          className="btn-ghost"
           disabled={page === 0}
           onClick={() => setPage((p) => Math.max(0, p - 1))}
         >
-          Previous page
+          Previous
         </button>
         <button
           type="button"
-          className="btn-ghost text-[#f3e6cf] border-[#f3e6cf]/30"
+          className="btn-ghost"
           disabled={page >= pages.length - 1}
           onClick={() => setPage((p) => Math.min(pages.length - 1, p + 1))}
         >
-          Next page
+          Next
         </button>
       </div>
 
       {open && (
         <div className="lightbox" onClick={() => setOpen(null)} role="presentation">
           <figure
-            className="paper-grain max-w-2xl p-5"
+            className="w-full max-w-2xl overflow-hidden rounded-3xl bg-[var(--surface)] p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-[#111]">
+            <div className="overflow-hidden rounded-2xl bg-black">
               {open.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={open.imageUrl} alt={open.title} className="max-h-[70vh] w-full object-contain" />
               ) : (
-                <div className="grid h-72 place-items-center text-[#f3e6cf]/70">
-                  Still in the developer tray
-                </div>
+                <div className="grid h-72 place-items-center text-white/40">Still developing</div>
               )}
             </div>
-            <figcaption className="mt-4">
+            <figcaption className="mt-4 px-1">
               <p className="display text-3xl">{open.title}</p>
-              <p className="hand text-xl text-[#9b3a22]">{open.yearLabel}</p>
-              <p className="mt-3 leading-relaxed">{open.description}</p>
+              <p className="mt-1 text-sm text-[var(--accent)]">{open.yearLabel}</p>
+              <p className="mt-3 leading-relaxed text-white/65">{open.description}</p>
               {open.members.length > 0 && (
-                <p className="mt-3 text-sm text-[#7a6550]">{open.members.join(" · ")}</p>
+                <p className="mt-3 text-sm text-white/35">{open.members.join(" · ")}</p>
               )}
             </figcaption>
             <button type="button" className="btn-ghost mt-5" onClick={() => setOpen(null)}>
@@ -141,6 +146,5 @@ export function AlbumViewer({
 function gridClass(page: AlbumPage): string {
   const n = page.photos.length;
   if (n <= 1) return "grid-cols-1 max-w-md mx-auto";
-  if (n === 3) return "sm:grid-cols-2";
   return "sm:grid-cols-2";
 }

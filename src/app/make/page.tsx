@@ -23,10 +23,10 @@ export default async function MakePage({
     <div className="min-h-full">
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-5 pb-16 sm:px-8">
-        <p className="hand text-2xl text-[#e8c48a]">inside the cover</p>
-        <h1 className="display mt-1 text-5xl text-[#f3e6cf]">Tell us the years</h1>
-        <p className="mt-3 max-w-xl text-[#f3e6cf]/75">
-          Fill this the way you would talk at a table. We will ask for twenty dollars at the end.
+        <p className="kicker mt-10">album brief</p>
+        <h1 className="display mt-3 text-6xl">Tell us the years</h1>
+        <p className="mt-4 max-w-xl text-white/55">
+          Faces, a window of time, the chapters. Twenty dollars at the end.
         </p>
         <div className="mt-8">
           <AlbumMaker

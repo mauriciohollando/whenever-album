@@ -3,7 +3,12 @@ import Stripe from "stripe";
 let client: Stripe | null = null;
 
 export function stripeEnabled(): boolean {
-  return !!process.env.STRIPE_SECRET_KEY?.trim() && !!process.env.STRIPE_PRICE_ALBUM?.trim();
+  return !!process.env.STRIPE_SECRET_KEY?.trim();
+}
+
+export function optionalPriceId(envName: string): string | undefined {
+  const id = process.env[envName]?.trim();
+  return id || undefined;
 }
 
 export function getStripe(): Stripe {

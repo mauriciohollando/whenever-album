@@ -357,3 +357,152 @@ select {
 .cover-card:hover img {
   filter: saturate(1.06);
 }
+
+.help-card {
+  width: min(34rem, 100%);
+  background: var(--surface);
+  border-radius: 1.35rem;
+  padding: 1.6rem 1.5rem 1.5rem;
+}
+
+.wizard-link {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wizard-link[data-on="true"] {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.wizard-link[data-ready="false"] {
+  color: var(--muted);
+}
+
+.wizard-link:hover {
+  background: var(--surface-2);
+}
+
+.wizard-link[data-on="true"]:hover {
+  background: var(--ink);
+}
+
+.pay-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 1.1rem;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.pay-option[data-on="true"] {
+  border-color: var(--ink);
+  background: var(--surface);
+}
+
+.pay-option[data-featured="true"] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.pay-option strong {
+  display: block;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+
+.pay-option em {
+  display: block;
+  margin-top: 0.15rem;
+  font-style: normal;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.pay-option input {
+  margin-top: 0.35rem;
+}
+
+.merch-stage {
+  position: relative;
+  width: min(100%, 28rem);
+  aspect-ratio: 1;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.merch-print {
+  position: absolute;
+  background-repeat: no-repeat;
+  background-color: #d7cfc3;
+}
+
+.merch-tee .merch-print,
+.merch-hoodie .merch-print {
+  inset: 28% 30% 34%;
+  border-radius: 0.35rem;
+}
+
+.merch-hoodie .merch-print {
+  inset: 30% 28% 28%;
+}
+
+.merch-mug .merch-print {
+  inset: 22% 18% 28%;
+  border-radius: 0 0.8rem 0.8rem 0;
+}
+
+.merch-poster .merch-print {
+  inset: 6%;
+}
+
+.merch-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.merch-thumbs button {
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.55rem;
+  overflow: hidden;
+  background: var(--photo);
+  cursor: pointer;
+}
+
+.merch-thumbs button[data-on="true"] {
+  border-color: var(--accent);
+}
+
+.merch-thumbs img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.swatch {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  padding: 0;
+  cursor: pointer;
+}
+
+.swatch[data-on="true"] {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

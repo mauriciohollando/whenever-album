@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlbumViewer } from "@/components/AlbumViewer";
+import { MerchShop } from "@/components/MerchShop";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { EXAMPLE_ALBUMS, exampleToPublicAlbum, getExampleAlbum } from "@/lib/exampleAlbums";
 
@@ -30,6 +31,7 @@ export default async function ExampleAlbumPage({
   const { id } = await params;
   const album = getExampleAlbum(id);
   if (!album) notFound();
+  const publicAlbum = exampleToPublicAlbum(album);
 
   return (
     <div className="min-h-full">
@@ -44,7 +46,8 @@ export default async function ExampleAlbumPage({
             Make yours
           </Link>
         </div>
-        <AlbumViewer album={exampleToPublicAlbum(album)} titleOverride={album.family} />
+        <AlbumViewer album={publicAlbum} titleOverride={album.family} />
+        <MerchShop album={publicAlbum} preview />
         <p className="mt-10 text-center text-sm text-[var(--muted)]">
           Arrow keys turn the page.{" "}
           <Link href="/#examples" className="underline underline-offset-4">

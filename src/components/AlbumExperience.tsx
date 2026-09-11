@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AlbumViewer } from "./AlbumViewer";
+import { MerchShop } from "./MerchShop";
 import type { PublicAlbum } from "@/lib/types";
 
 export function AlbumExperience({
@@ -61,6 +63,28 @@ export function AlbumExperience({
       )}
       {error && <p className="mb-4 text-[var(--accent)]">{error}</p>}
       <AlbumViewer album={album} developing={developing} progress={progress} />
+      {album.printOrder && (
+        <p className="mt-6 text-sm text-[var(--muted)]">
+          Printed {album.printOrder.finish}: {album.printOrder.status}
+          {album.printOrder.error ? ` · ${album.printOrder.error}` : ""}
+          {album.printOrder.trackingUrl ? (
+            <>
+              {" · "}
+              <a className="underline underline-offset-4" href={album.printOrder.trackingUrl}>
+                Track the book
+              </a>
+            </>
+          ) : null}
+        </p>
+      )}
+      {album.extraAlbumToken && (album.extraAlbumRemaining ?? 0) > 0 && (
+        <p className="mt-4">
+          <Link href={`/make?credit=${album.extraAlbumToken}`} className="btn-rust">
+            Make your second album
+          </Link>
+        </p>
+      )}
+      {album.status === "ready" && <MerchShop album={album} token={token} />}
     </div>
   );
 }

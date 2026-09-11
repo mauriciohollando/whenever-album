@@ -16,8 +16,54 @@ function albumPath(id: string): string {
 }
 
 export function toPublicAlbum(album: Album): PublicAlbum {
-  const { tokenHash: _tokenHash, ...rest } = album;
+  const { tokenHash: _tokenHash, merchDrafts: _drafts, pendingCreditToken: _pending, ...rest } = album;
   return rest;
+}
+
+export async function saveJson(pathname: string, data: unknown): Promise<void> {
+  const body = JSON.stringify(data, null, 2);
+  const safe = pathname.replace(/^\/+/, "").replace(/\.\.+/g, "");
+
+  if (isBlobConfigured()) {
+    await blobPut(safe, body, {
+      access: "public",
+      contentType: "application/json",
+      addRandomSuffix: false,
+      allowOverwrite: true,
+    });
+    return;
+  }
+
+  if (onVercel()) {
+    throw new Error("BLOB_READ_WRITE_TOKEN is missing on Vercel.");
+  }
+
+  const file = path.join(process.cwd(), ".data", safe);
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(file, body, "utf8");
+}
+
+export async function loadJson<T>(pathname: string): Promise<T | null> {
+  const safe = pathname.replace(/^\/+/, "").replace(/\.\.+/g, "");
+
+  if (isBlobConfigured()) {
+    const listed = await blobList({ prefix: safe, limit: 1 });
+    const found = listed.blobs.find((b) => b.pathname === safe);
+    if (!found) return null;
+    const res = await fetch(found.url, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  }
+
+  if (onVercel()) return null;
+
+  try {
+    const file = path.join(process.cwd(), ".data", safe);
+    const raw = await readFile(file, "utf8");
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
 }
 
 export async function saveAlbum(album: Album): Promise<void> {

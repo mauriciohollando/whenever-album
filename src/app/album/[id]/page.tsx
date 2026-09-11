@@ -3,26 +3,24 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 import { AlbumExperience } from "@/components/AlbumExperience";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { applyStripeSession } from "@/lib/fulfill";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
-import { loadAlbum, saveAlbum, toPublicAlbum } from "@/lib/store";
+import { loadAlbum, toPublicAlbum } from "@/lib/store";
 import { tokensMatch } from "@/lib/token";
 import type { Album } from "@/lib/types";
 
-async function confirmPaid(album: Album): Promise<Album> {
-  if (album.status !== "draft" || !album.stripeSessionId || !stripeEnabled()) {
-    return album;
-  }
+async function confirmPaid(album: Album, sessionId?: string): Promise<Album> {
+  const id = sessionId || album.stripeSessionId;
+  if (!id || !stripeEnabled()) return album;
   try {
-    const session = await getStripe().checkout.sessions.retrieve(album.stripeSessionId);
+    const session = await getStripe().checkout.sessions.retrieve(id);
     if (session.payment_status !== "paid") return album;
-    album.status = "paid";
-    album.email = session.customer_details?.email || session.customer_email || album.email;
-    album.updatedAt = new Date().toISOString();
-    await saveAlbum(album);
+    await applyStripeSession(session);
+    const next = await loadAlbum(album.id);
+    return next || album;
   } catch {
     return album;
   }
-  return album;
 }
 
 export default async function AlbumPage({
@@ -30,7 +28,7 @@ export default async function AlbumPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ token?: string; checkout?: string }>;
+  searchParams: Promise<{ token?: string; checkout?: string; merch?: string; session_id?: string }>;
 }) {
   const { id } = await params;
   const q = await searchParams;
@@ -55,14 +53,24 @@ export default async function AlbumPage({
     );
   }
 
-  const album = q.checkout === "success" ? await confirmPaid(found) : found;
+  const album =
+    q.checkout === "success" || q.merch === "success" || q.session_id
+      ? await confirmPaid(found, q.session_id)
+      : found;
 
   return (
     <div className="min-h-full">
       <SiteHeader quiet />
       <main className="mx-auto max-w-4xl px-5 pb-16 pt-8 sm:px-8">
         {album.status !== "draft" && q.checkout === "success" && (
-          <p className="kicker mb-4">Paid. Developing now.</p>
+          <p className="kicker mb-4">
+            {album.printOrder
+              ? "Paid. Developing the album, then we send the book to print."
+              : "Paid. Developing now."}
+          </p>
+        )}
+        {q.merch === "success" && (
+          <p className="kicker mb-4">Merch is paid. We send it to the printer from here.</p>
         )}
         {album.status === "draft" && q.checkout === "success" && (
           <p className="mb-4 text-[var(--accent)]">

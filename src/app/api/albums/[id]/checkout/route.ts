@@ -1,20 +1,37 @@
 import { NextResponse } from "next/server";
+import { consumeCredit, loadCredit } from "@/lib/credits";
+import { quoteCart, type PrintFinish } from "@/lib/commerce";
+import { applyAlbumPayment } from "@/lib/fulfill";
 import { siteOrigin } from "@/lib/site";
-import { albumPriceId, getStripe, stripeEnabled } from "@/lib/stripe";
+import { getStripe, stripeEnabled } from "@/lib/stripe";
+import { stripeItem, stripeShipping, STRIPE_SHIP_COUNTRIES } from "@/lib/stripeCatalog";
 import { loadAlbum, saveAlbum } from "@/lib/store";
 import { tokensMatch } from "@/lib/token";
 import { parseDraft } from "@/lib/validate";
+import type { Album } from "@/lib/types";
 
 export const runtime = "nodejs";
+
+function printFrom(body: Record<string, unknown>): PrintFinish | null {
+  const value = String(body.print || "");
+  if (value === "hardcover" || value === "softcover") return value;
+  return null;
+}
+
+async function lockDraft(album: Album, body: Record<string, unknown>) {
+  const draft = parseDraft(body);
+  album.members = draft.members;
+  album.start = draft.start;
+  album.end = draft.end;
+  album.events = draft.events;
+  album.tags = draft.tags;
+  album.updatedAt = new Date().toISOString();
+}
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!stripeEnabled()) {
-    return NextResponse.json({ error: "Billing is not configured yet." }, { status: 503 });
-  }
-
   const { id } = await params;
   const body = (await request.json()) as Record<string, unknown>;
   const token = String(body.token || "");
@@ -27,30 +44,82 @@ export async function POST(
   }
 
   try {
-    const draft = parseDraft(body);
-    album.members = draft.members;
-    album.start = draft.start;
-    album.end = draft.end;
-    album.events = draft.events;
-    album.tags = draft.tags;
-    album.updatedAt = new Date().toISOString();
+    await lockDraft(album, body);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Finish the album first.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
+  const creditToken = String(body.creditToken || "");
+  const extraAlbum = body.extraAlbum === true || body.extraAlbum === "1";
+  const print = printFrom(body);
+  const country = String(body.country || "US").toUpperCase();
+  const quote = quoteCart({ extraAlbum, print, country, digitalPaid: !!creditToken });
+  let usedCredit = false;
+
+  if (creditToken) {
+    const credit = await loadCredit(creditToken);
+    if (!credit || credit.remaining < 1) {
+      return NextResponse.json({ error: "That second-album credit is gone." }, { status: 400 });
+    }
+    usedCredit = true;
+    album.email = credit.email || album.email;
+    if (!print) {
+      await consumeCredit(creditToken);
+      album.status = "paid";
+      album.paidWithCredit = true;
+      album.updatedAt = new Date().toISOString();
+      await saveAlbum(album);
+      return NextResponse.json({
+        url: `${siteOrigin()}/album/${album.id}?token=${token}&checkout=success`,
+      });
+    }
+    album.pendingCreditToken = creditToken;
+  }
+
+  if (!stripeEnabled()) {
+    return NextResponse.json({ error: "Billing is not configured yet." }, { status: 503 });
+  }
   const origin = siteOrigin();
+
+  const line_items = usedCredit
+    ? []
+    : [stripeItem("album", "Whenever digital album", quote.digitalUsd)];
+  if (!usedCredit && quote.extraAlbumUsd) {
+    line_items.push(stripeItem("extra_album", "Second album credit", quote.extraAlbumUsd));
+  }
+  if (print === "hardcover") {
+    line_items.push(
+      stripeItem(
+        quote.hardcoverBundled ? "hardcover_cart" : "hardcover",
+        "Hardcover photo book",
+        quote.printUsd
+      )
+    );
+  }
+  if (print === "softcover") {
+    line_items.push(stripeItem("softcover", "Softcover photo book", quote.printUsd));
+  }
+
   const session = await getStripe().checkout.sessions.create({
     mode: "payment",
-    line_items: [{ price: albumPriceId(), quantity: 1 }],
-    customer_email: undefined,
-    success_url: `${origin}/album/${album.id}?token=${token}&checkout=success`,
+    line_items,
+    success_url: `${origin}/album/${album.id}?token=${token}&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/make?album=${album.id}&token=${token}&checkout=cancel`,
     allow_promotion_codes: true,
+    billing_address_collection: "auto",
+    shipping_address_collection: print
+      ? { allowed_countries: STRIPE_SHIP_COUNTRIES as unknown as string[] }
+      : undefined,
+    shipping_options: print
+      ? [stripeShipping(country === "US" ? "US shipping" : "International shipping", quote.shippingUsd)]
+      : undefined,
     metadata: {
       product: "whenever",
       sku: "album",
       album_id: album.id,
+      extra_album: extraAlbum ? "1" : "0",
+      print: print || "",
     },
   });
 
@@ -60,5 +129,22 @@ export async function POST(
 
   album.stripeSessionId = session.id;
   await saveAlbum(album);
-  return NextResponse.json({ url: session.url });
+  return NextResponse.json({ url: session.url, quote });
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const body = (await request.json()) as { sessionId?: string };
+  const album = await loadAlbum(id);
+  if (!album || !body.sessionId) {
+    return NextResponse.json({ error: "Album not found." }, { status: 404 });
+  }
+  const session = await getStripe().checkout.sessions.retrieve(body.sessionId);
+  if (session.payment_status === "paid") {
+    await applyAlbumPayment(album, session);
+  }
+  return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { applyStripeSession } from "@/lib/fulfill";
 import { getStripe } from "@/lib/stripe";
-import { loadAlbum, saveAlbum } from "@/lib/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,23 +29,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const session = event.data.object;
-  if (session.metadata?.product !== "whenever") {
-    return NextResponse.json({ ok: true, ignored: true });
-  }
-
-  const albumId = session.metadata?.album_id;
-  if (!albumId) return NextResponse.json({ ok: true });
-
-  const album = await loadAlbum(albumId);
-  if (!album) return NextResponse.json({ ok: true, missing: true });
-  if (album.status === "draft") {
-    album.status = "paid";
-    album.email = session.customer_details?.email || session.customer_email || album.email;
-    album.stripeSessionId = session.id;
-    album.updatedAt = new Date().toISOString();
-    await saveAlbum(album);
-  }
-
+  await applyStripeSession(event.data.object);
   return NextResponse.json({ ok: true });
 }

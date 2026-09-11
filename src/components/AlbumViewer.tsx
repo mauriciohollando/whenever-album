@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AlbumPage, AlbumPhoto, PublicAlbum } from "@/lib/types";
 import { formatWindow } from "@/lib/years";
+import { DownloadPdfButton } from "./DownloadPdfButton";
 import { PhotoLightbox } from "./PhotoLightbox";
 import { PhotoPlate } from "./PhotoPlate";
 
@@ -71,11 +72,14 @@ export function AlbumViewer({
           <p className="kicker">{formatWindow(album.start, album.end)}</p>
           <h1 className="display mt-2 text-5xl">{title}</h1>
         </div>
-        <p className="text-sm text-[var(--muted)]">
-          {pct != null
-            ? `${progress?.done}/${progress?.total} photographs`
-            : `Page ${current.index} / ${pages.length}`}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-[var(--muted)]">
+            {pct != null
+              ? `${progress?.done}/${progress?.total} photographs`
+              : `Page ${current.index} / ${pages.length}`}
+          </p>
+          {!developing && <DownloadPdfButton album={album} title={title} />}
+        </div>
       </div>
 
       {pct != null && (

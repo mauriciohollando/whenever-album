@@ -8,7 +8,7 @@ import { tokensMatch } from "@/lib/token";
 export default async function MakePage({
   searchParams,
 }: {
-  searchParams: Promise<{ album?: string; token?: string; checkout?: string }>;
+  searchParams: Promise<{ album?: string; token?: string; checkout?: string; credit?: string }>;
 }) {
   const q = await searchParams;
   let initialAlbum;
@@ -33,6 +33,7 @@ export default async function MakePage({
             initialAlbum={initialAlbum}
             initialToken={q.token}
             canceled={q.checkout === "cancel"}
+            creditToken={q.credit}
           />
         </div>
       </main>

@@ -2,22 +2,34 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MAX_EVENTS, MAX_MEMBERS, MAX_PHOTOS_PER_MEMBER, SITE_PRICE_USD } from "@/lib/site";
+import { formatUsd, quoteCart } from "@/lib/commerce";
+import { MAX_EVENTS, MAX_MEMBERS, MAX_PHOTOS_PER_MEMBER } from "@/lib/site";
 import { ALBUM_TAGS, MAX_TAGS } from "@/lib/tags";
 import type { AlbumDraftInput, AlbumEvent, AlbumYear, FamilyMember, PublicAlbum } from "@/lib/types";
 import { formatWindow, windowError } from "@/lib/years";
 import { newClientId } from "@/lib/clientId";
-
-const STEPS = ["People", "Years", "Happenings", "Mood", "Create"] as const;
+import {
+  CREATE_STEP,
+  STEP_HELP,
+  WIZARD_STEPS,
+  draftIsReady,
+  firstIncompleteStep,
+  namedEvents,
+  peopleProblem,
+} from "@/lib/wizard";
+import { HelpDialog } from "./HelpDialog";
+import { PayStep, type PayChoices } from "./PayStep";
 
 export function AlbumMaker({
   initialAlbum,
   initialToken,
   canceled = false,
+  creditToken,
 }: {
   initialAlbum?: PublicAlbum;
   initialToken?: string;
   canceled?: boolean;
+  creditToken?: string;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -33,14 +45,17 @@ export function AlbumMaker({
   const [events, setEvents] = useState<AlbumEvent[]>(initialAlbum?.events || []);
   const [tags, setTags] = useState<string[]>(initialAlbum?.tags || []);
   const [busy, setBusy] = useState(false);
+  const [help, setHelp] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(canceled ? "Checkout was left on the table. The album is still here." : null);
+  const [pay, setPay] = useState<PayChoices>({ extraAlbum: false, print: null, country: "US" });
+  const cart = quoteCart({ ...pay, digitalPaid: !!creditToken });
 
   const draft: AlbumDraftInput = useMemo(
     () => ({
       members,
       start,
       end,
-      events: events.filter((e) => e.name.trim()),
+      events: namedEvents(events),
       tags,
     }),
     [members, start, end, events, tags]
@@ -66,9 +81,22 @@ export function AlbumMaker({
   }, [albumId]);
 
   const yearProblem = windowError(start, end);
-  const peopleProblem = members.some((m) => !m.name.trim() || m.photos.length === 0)
-    ? "Every person needs a name and at least one photograph."
-    : null;
+  const facesProblem = peopleProblem(members);
+  const ready = draftIsReady(members, start, end);
+  const helpCopy = help != null ? STEP_HELP[help] : null;
+
+  function goTo(index: number, opts?: { help?: boolean }) {
+    setError(null);
+    if (index === CREATE_STEP && !ready) {
+      const missing = firstIncompleteStep(members, start, end) ?? 0;
+      setStep(missing);
+      setHelp(missing);
+      return;
+    }
+    setStep(index);
+    if (opts?.help) setHelp(index);
+    void persist().catch(() => undefined);
+  }
 
   async function persist() {
     if (!albumId || !token) throw new Error("Album is still being opened.");
@@ -82,34 +110,32 @@ export function AlbumMaker({
   }
 
   async function next() {
-    setError(null);
-    if (step === 0 && peopleProblem) return setError(peopleProblem);
-    if (step === 1 && yearProblem) return setError(yearProblem);
-    try {
-      setBusy(true);
-      await persist();
-      setStep((s) => Math.min(STEPS.length - 1, s + 1));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save.");
-    } finally {
-      setBusy(false);
-    }
+    goTo(Math.min(WIZARD_STEPS.length - 1, step + 1));
   }
 
-  async function pay() {
+  async function payNow() {
     setError(null);
-    if (peopleProblem) return setError(peopleProblem);
-    if (yearProblem) return setError(yearProblem);
+    if (!ready) {
+      goTo(CREATE_STEP);
+      return;
+    }
     try {
       setBusy(true);
       const res = await fetch(`/api/albums/${albumId}/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, ...draft }),
+        body: JSON.stringify({
+          token,
+          ...draft,
+          extraAlbum: pay.extraAlbum,
+          print: pay.print,
+          country: pay.country,
+          creditToken: creditToken || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Checkout failed.");
-      window.location.href = data.url;
+      window.location.assign(data.url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Checkout failed.");
       setBusy(false);
@@ -119,26 +145,28 @@ export function AlbumMaker({
   return (
     <div className="album-board p-5 sm:p-8">
         <div className="progress-bar mb-6">
-          <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+          <span style={{ width: `${((step + 1) / WIZARD_STEPS.length) * 100}%` }} />
         </div>
-        <ol className="flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
-          {STEPS.map((label, i) => (
-            <li key={label} className={i === step ? "text-[var(--ink)]" : ""}>
-              <button
-                type="button"
-                onClick={() => i < step && setStep(i)}
-                className={`rounded-full px-3 py-1.5 font-medium ${
-                  i === step
-                    ? "bg-[var(--ink)] text-[var(--surface)]"
-                    : i < step
-                      ? "text-[var(--accent)]"
-                      : ""
-                }`}
-              >
-                {String(i + 1).padStart(2, "0")} {label}
-              </button>
-            </li>
-          ))}
+        <ol className="flex flex-wrap items-center gap-1 text-sm">
+          {WIZARD_STEPS.map((label, i) => {
+            const href = `#${label.toLowerCase()}`;
+            return (
+              <li key={label}>
+                <a
+                  href={href}
+                  className="wizard-link"
+                  data-on={i === step}
+                  data-ready={i !== CREATE_STEP || ready}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    goTo(i);
+                  }}
+                >
+                  {String(i + 1).padStart(2, "0")} {label}
+                </a>
+              </li>
+            );
+          })}
         </ol>
 
         {step === 0 && (
@@ -152,37 +180,50 @@ export function AlbumMaker({
         {step === 1 && <YearsStep start={start} end={end} setStart={setStart} setEnd={setEnd} />}
         {step === 2 && <EventsStep events={events} setEvents={setEvents} />}
         {step === 3 && <TagsStep tags={tags} setTags={setTags} />}
-        {step === 4 && (
-          <PayStep
-            members={members}
-            start={start}
-            end={end}
-            events={events}
-            tags={tags}
-          />
+        {step === CREATE_STEP && ready && (
+          <PayStep draft={draft} choices={pay} onChange={setPay} credit={!!creditToken} />
         )}
 
         {error && <p className="mt-6 text-[var(--accent)]">{error}</p>}
 
-        <div className="mt-8 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap items-center gap-3">
           {step > 0 && (
-            <button type="button" className="btn-ghost" onClick={() => setStep((s) => s - 1)}>
+            <button type="button" className="btn-ghost" onClick={() => goTo(step - 1)}>
               Back
             </button>
           )}
-          {step < STEPS.length - 1 ? (
+          {step < CREATE_STEP ? (
             <button type="button" className="btn-rust" disabled={busy} onClick={next}>
-              {busy ? "Saving…" : "Continue"}
+              Continue
             </button>
-          ) : (
-            <button type="button" className="btn-rust" disabled={busy} onClick={pay}>
-              {busy ? "Opening checkout…" : `Pay $${SITE_PRICE_USD} and create`}
+          ) : ready ? (
+            <button type="button" className="btn-rust" disabled={busy} onClick={payNow}>
+              {busy
+                ? "Opening checkout…"
+                : creditToken && !pay.print
+                  ? "Create with your credit"
+                  : `Pay ${formatUsd(cart.totalUsd)} and create`}
             </button>
-          )}
+          ) : null}
+          <button
+            type="button"
+            className="text-sm text-[var(--muted)] underline decoration-[var(--line)] underline-offset-4"
+            onClick={() => setHelp(step)}
+          >
+            How this works
+          </button>
           <button type="button" className="text-sm text-[var(--muted)]" onClick={() => router.push("/")}>
             Leave it for later
           </button>
         </div>
+        {helpCopy && (
+          <HelpDialog
+            title={helpCopy.title}
+            body={helpCopy.body}
+            problem={help === 0 ? facesProblem : help === 1 ? yearProblem : null}
+            onClose={() => setHelp(null)}
+          />
+        )}
     </div>
   );
 }
@@ -466,47 +507,6 @@ function TagsStep({ tags, setTags }: { tags: string[]; setTags: (t: string[]) =>
       <p className="mt-5 text-[var(--muted)]">
         {tags.length ? tags.join(" · ") : "None yet — candid will do."}
       </p>
-    </div>
-  );
-}
-
-function PayStep({
-  members,
-  start,
-  end,
-  events,
-  tags,
-}: {
-  members: FamilyMember[];
-  start: AlbumYear;
-  end: AlbumYear;
-  events: AlbumEvent[];
-  tags: string[];
-}) {
-  return (
-    <div className="mt-6">
-      <h2 className="display text-4xl">${SITE_PRICE_USD} to create this album</h2>
-      <p className="mt-2 max-w-xl text-[var(--muted)]">
-        One payment. Then we develop the twenty pages and send you back to them.
-      </p>
-      <dl className="mt-6 grid gap-3 text-[var(--ink)]">
-        <div>
-          <dt className="text-sm uppercase tracking-[0.14em] text-[var(--muted)]">People</dt>
-          <dd>{members.map((m) => m.name || "unnamed").join(", ")}</dd>
-        </div>
-        <div>
-          <dt className="text-sm uppercase tracking-[0.14em] text-[var(--muted)]">Years</dt>
-          <dd>{formatWindow(start, end)}</dd>
-        </div>
-        <div>
-          <dt className="text-sm uppercase tracking-[0.14em] text-[var(--muted)]">Events</dt>
-          <dd>{events.length ? events.map((e) => e.name || "untitled").join(" · ") : "None named"}</dd>
-        </div>
-        <div>
-          <dt className="text-sm uppercase tracking-[0.14em] text-[var(--muted)]">Mood</dt>
-          <dd>{tags.length ? tags.join(" · ") : "Candid"}</dd>
-        </div>
-      </dl>
     </div>
   );
 }

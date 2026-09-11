@@ -1,5 +1,6 @@
 export const SITE_NAME = "Whenever";
-export const SITE_PRICE_USD = 20;
+export const SITE_PRICE_USD = 12;
+export const SITE_TWO_FOR_USD = 15;
 export const ALBUM_PAGE_COUNT = 20;
 export const MAX_MEMBERS = 6;
 export const MAX_PHOTOS_PER_MEMBER = 5;

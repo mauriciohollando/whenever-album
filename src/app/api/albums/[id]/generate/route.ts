@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { fulfillPrintIfNeeded } from "@/lib/fulfill";
 import { albumProgress, generateNextPhoto, planAlbum } from "@/lib/generate";
 import { loadAlbum, saveAlbum, toPublicAlbum } from "@/lib/store";
 import { tokensMatch } from "@/lib/token";
@@ -41,5 +42,6 @@ export async function POST(
   const next = await generateNextPhoto(album);
   next.updatedAt = new Date().toISOString();
   await saveAlbum(next);
-  return NextResponse.json({ album: toPublicAlbum(next), progress: albumProgress(next) });
+  const fulfilled = next.status === "ready" ? await fulfillPrintIfNeeded(next) : next;
+  return NextResponse.json({ album: toPublicAlbum(fulfilled), progress: albumProgress(fulfilled) });
 }

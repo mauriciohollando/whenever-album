@@ -15,47 +15,53 @@ const YEARS = [
   "any century you want",
 ];
 
+const ERA_KICKER = ["kicker-amber", "kicker", "kicker-ice"] as const;
+
 export function LandingPage() {
-  const hero = EXAMPLE_ALBUMS[0].pages.flatMap((p) => p.photos);
+  const past = EXAMPLE_ALBUMS[0].pages.flatMap((p) => p.photos);
   const future = EXAMPLE_ALBUMS[2].pages.flatMap((p) => p.photos);
 
   return (
     <div className="min-h-full">
-      <SiteHeader />
+      <SiteHeader overHero />
       <main>
-        <section className="grid items-end gap-10 px-5 pb-16 pt-10 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:min-h-[calc(100vh-4.5rem)] lg:pb-20">
-          <div>
+        <section className="hero-stage px-5 pb-10 pt-8 sm:px-8 lg:px-10 lg:pb-16 lg:pt-28">
+          <div className="hero-split" aria-hidden={false}>
+            <figure className="hero-pane hero-pane-past">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={past[0]?.imageUrl ?? ""} alt="Sunday shirts, 1948" />
+              <figcaption>1948 · Queens</figcaption>
+            </figure>
+            <figure className="hero-pane hero-pane-future">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={future[1]?.imageUrl ?? ""} alt="Ordered clouds, 2112" />
+              <figcaption>2112 · Orbital</figcaption>
+            </figure>
+            <div className="hero-cut">
+              <span>20</span>
+            </div>
+          </div>
+          <div className="hero-copy mt-8 lg:mt-0">
             <p className="kicker">AI family album · $20</p>
             <h1 className="display hero-type mt-4">
               Your people.
               <br />
-              <span className="text-[var(--accent)]">Any century.</span>
+              Any century.
             </h1>
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/65">
+            <p className="mt-6 max-w-md text-lg leading-relaxed text-white/68">
               Drop in a few faces. Name the years. Get twenty pages back — they
               get older as time moves, whether that is 500 BC, 1948, or 2112.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-8 flex flex-wrap items-center gap-5">
               <Link href="/make" className="btn-rust text-base sm:text-lg">
                 Make one for ${SITE_PRICE_USD}
               </Link>
-              <a href="#examples" className="text-white/60 underline decoration-white/20 underline-offset-4">
+              <a
+                href="#examples"
+                className="text-sm font-medium tracking-wide text-white/70 underline decoration-white/25 underline-offset-4 hover:text-white"
+              >
                 See the albums
               </a>
-            </div>
-          </div>
-          <div className="relative mx-auto w-full max-w-xl pb-10">
-            <div className="hero-photo stack-a">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={hero[0]?.imageUrl ?? ""} alt="Sunday shirts, 1948" />
-            </div>
-            <div className="hero-photo stack-b ring-4 ring-[var(--bg)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={future[1]?.imageUrl ?? ""} alt="Ordered clouds, 2112" />
-            </div>
-            <div className="hero-photo stack-c ring-4 ring-[var(--bg)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={EXAMPLE_ALBUMS[1].pages[1].photos[0].imageUrl ?? ""} alt="1099" />
             </div>
           </div>
         </section>
@@ -71,7 +77,7 @@ export function LandingPage() {
           </div>
         </div>
 
-        <section className="grid gap-10 px-5 py-20 sm:px-8 md:grid-cols-3">
+        <section className="grid gap-12 px-5 py-20 sm:px-8 md:grid-cols-3 lg:py-28">
           {[
             {
               n: "01",
@@ -90,29 +96,31 @@ export function LandingPage() {
             },
           ].map((step) => (
             <article key={step.n}>
-              <p className="display text-6xl text-white/12">{step.n}</p>
-              <h2 className="display mt-3 text-4xl">{step.t}</h2>
+              <p className="step-index">{step.n}</p>
+              <h2 className="display mt-4 text-4xl sm:text-5xl">{step.t}</h2>
               <p className="mt-3 max-w-sm leading-relaxed text-white/55">{step.d}</p>
             </article>
           ))}
         </section>
 
         <section id="examples" className="scroll-mt-20">
-          <div className="px-5 pb-8 sm:px-8">
+          <div className="px-5 pb-10 sm:px-8">
             <p className="kicker">from the shop</p>
-            <h2 className="display mt-3 text-5xl sm:text-7xl">Albums people asked for</h2>
+            <h2 className="display mt-3 max-w-4xl text-5xl sm:text-7xl lg:text-8xl">
+              Albums people asked for
+            </h2>
           </div>
-          <div className="grid">
-            {EXAMPLE_ALBUMS.map((ex) => (
+          <div>
+            {EXAMPLE_ALBUMS.map((ex, i) => (
               <article
                 key={ex.id}
-                className="grid items-center gap-8 border-t border-white/10 px-5 py-12 sm:px-8 lg:grid-cols-[0.85fr_1.15fr]"
+                className="grid items-start gap-8 border-t border-white/10 px-5 py-14 sm:px-8 lg:grid-cols-[0.78fr_1.22fr] lg:py-16"
               >
                 <div>
-                  <p className="kicker">{ex.window}</p>
-                  <h3 className="display mt-3 text-4xl sm:text-5xl">{ex.family}</h3>
+                  <p className={`kicker ${ERA_KICKER[i] ?? "kicker"}`}>{ex.window}</p>
+                  <h3 className="display mt-3 text-4xl sm:text-6xl">{ex.family}</h3>
                   <p className="mt-2 text-sm text-white/40">{ex.place}</p>
-                  <p className="mt-5 max-w-md leading-relaxed text-white/65">{ex.blurb}</p>
+                  <p className="mt-5 max-w-md leading-relaxed text-white/68">{ex.blurb}</p>
                   <div className="mt-5 flex flex-wrap gap-2">
                     {ex.tags.map((tag) => (
                       <span key={tag} className="tag-chip text-white/70">
@@ -131,9 +139,11 @@ export function LandingPage() {
 
         <section className="grid gap-px bg-white/10 md:grid-cols-2">
           {REVIEWS.map((review) => (
-            <blockquote key={review.name} className="bg-[var(--bg)] p-8 sm:p-12">
-              <p className="display text-3xl leading-tight sm:text-4xl">“{review.text}”</p>
-              <footer className="mt-6 text-sm text-white/45">
+            <blockquote key={review.name} className="quote-block">
+              <p className="display text-3xl leading-[1.05] sm:text-[2.35rem]">
+                “{review.text}”
+              </p>
+              <footer className="mt-6 text-sm uppercase tracking-[0.14em] text-white/40">
                 {review.name} · {review.place}
               </footer>
             </blockquote>
@@ -142,28 +152,30 @@ export function LandingPage() {
 
         <section id="guestbook" className="scroll-mt-20 px-5 py-20 sm:px-8">
           <p className="kicker">notes on the inside cover</p>
-          <h2 className="display mt-3 text-5xl">People keep writing back</h2>
-          <ul className="mt-10 grid gap-6 sm:grid-cols-2">
+          <h2 className="display mt-3 text-5xl sm:text-6xl">People keep writing back</h2>
+          <ul className="mt-10 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-2">
             {GUESTBOOK.map((row) => (
-              <li key={row.name} className="rounded-3xl border border-white/10 p-6">
-                <p className="text-sm font-medium text-[var(--accent)]">{row.name}</p>
-                <p className="mt-2 text-lg leading-relaxed text-white/70">{row.note}</p>
+              <li key={row.name} className="bg-[var(--bg)] p-6 sm:p-8">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+                  {row.name}
+                </p>
+                <p className="mt-3 text-lg leading-relaxed text-white/72">{row.note}</p>
               </li>
             ))}
           </ul>
         </section>
 
-        <section className="mx-5 mb-16 overflow-hidden rounded-[2rem] bg-[var(--accent)] px-6 py-16 text-center text-white sm:mx-8 sm:px-10">
-          <p className="kicker !text-white/80">one product</p>
+        <section className="mx-5 mb-16 overflow-hidden rounded-[2rem] bg-[#f4f0e6] px-6 py-16 text-[#050508] sm:mx-8 sm:px-12 sm:py-20">
+          <p className="kicker !text-[#d5183f]">one product</p>
           <h2 className="display mx-auto mt-3 max-w-3xl text-5xl sm:text-7xl">
             Twenty dollars.
             <br />
             Twenty pages.
           </h2>
-          <p className="mx-auto mt-5 max-w-lg text-white/80">
+          <p className="mx-auto mt-5 max-w-lg text-[#050508]/65">
             No packs. No membership. You pay once, we develop the album, you keep the link.
           </p>
-          <Link href="/make" className="mt-8 inline-flex rounded-full bg-black px-6 py-3.5 font-semibold text-white">
+          <Link href="/make" className="btn-rust mt-8 !bg-[#050508] !text-white">
             Start yours
           </Link>
         </section>

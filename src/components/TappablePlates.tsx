@@ -9,7 +9,7 @@ export function TappablePlates({ photos }: { photos: AlbumPhoto[] }) {
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="mosaic">
         {photos.map((photo) => (
           <PhotoPlate
             key={photo.id}

@@ -121,13 +121,22 @@ export function AlbumMaker({
         <div className="progress-bar mb-6">
           <span style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
         </div>
-        <ol className="flex flex-wrap gap-3 text-sm text-white/35">
+        <ol className="flex flex-wrap items-center gap-2 text-sm text-white/35">
           {STEPS.map((label, i) => (
-            <li key={label} className={i === step ? "text-[var(--accent)]" : ""}>
-              <button type="button" onClick={() => i < step && setStep(i)} className="font-medium">
-                {label}
+            <li key={label} className={i === step ? "text-[var(--ink)]" : ""}>
+              <button
+                type="button"
+                onClick={() => i < step && setStep(i)}
+                className={`rounded-full px-3 py-1.5 font-medium ${
+                  i === step
+                    ? "bg-white text-[#050508]"
+                    : i < step
+                      ? "text-[var(--accent)]"
+                      : ""
+                }`}
+              >
+                {String(i + 1).padStart(2, "0")} {label}
               </button>
-              {i < STEPS.length - 1 ? <span className="mx-2 text-white/15">/</span> : null}
             </li>
           ))}
         </ol>
@@ -249,12 +258,12 @@ function PeopleStep({
             />
             <div className="mt-4 flex flex-wrap gap-3">
               {member.photos.map((photo) => (
-                <div key={photo.pathname} className="relative h-20 w-20 overflow-hidden bg-[#111]">
+                <div key={photo.pathname} className="thumb">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photo.url} alt="" className="h-full w-full object-cover" />
                   <button
                     type="button"
-                    className="absolute right-0 top-0 bg-[#2a1b12]/70 px-1 text-xs text-white"
+                    className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-black/70 text-xs text-white"
                     onClick={() =>
                       update(member.id, {
                         photos: member.photos.filter((p) => p.pathname !== photo.pathname),
@@ -266,7 +275,7 @@ function PeopleStep({
                 </div>
               ))}
               {member.photos.length < MAX_PHOTOS_PER_MEMBER && (
-                <label className="grid h-20 w-20 cursor-pointer place-items-center border border-dashed border-white/15 text-xs text-white/40">
+                <label className="upload-tile">
                   Add photo
                   <input
                     type="file"

@@ -60,7 +60,7 @@ export default async function AlbumPage({
   return (
     <div className="min-h-full">
       <SiteHeader quiet />
-      <main className="mx-auto max-w-4xl px-5 pb-16 sm:px-8">
+      <main className="mx-auto max-w-4xl px-5 pb-16 pt-8 sm:px-8">
         {album.status !== "draft" && q.checkout === "success" && (
           <p className="kicker mb-4">Paid. Developing now.</p>
         )}

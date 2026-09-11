@@ -24,7 +24,7 @@ export function PhotoPlate({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt={title} />
         ) : (
-          <div className="flex h-full items-end bg-[#1a1a1e] p-4">
+          <div className="flex h-full items-end bg-[#14141a] p-4">
             <span className="text-white/50">{year}</span>
           </div>
         )}

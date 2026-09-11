@@ -67,8 +67,10 @@ export function AlbumViewer({
 
       <div className="page-leaf p-5 sm:p-8">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 className="display text-3xl sm:text-4xl">{current.heading}</h2>
-          <span className="text-white/35">{current.index}</span>
+          <h2 className="display text-3xl sm:text-5xl">{current.heading}</h2>
+          <span className="text-sm uppercase tracking-[0.16em] text-white/35">
+            {String(current.index).padStart(2, "0")}
+          </span>
         </div>
         <div className={`mt-6 grid gap-3 ${gridClass(current)}`}>
           {current.photos.map((photo) => (

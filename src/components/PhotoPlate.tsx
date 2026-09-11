@@ -25,7 +25,7 @@ export function PhotoPlate({
           <img src={src} alt={title} />
         ) : (
           <div className="flex h-full items-end bg-[#14141a] p-4">
-            <span className="text-white/50">{year}</span>
+            <span className="text-[var(--muted)]">{year}</span>
           </div>
         )}
       </div>

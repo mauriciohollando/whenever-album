@@ -43,7 +43,7 @@ export default async function AlbumPage({
         <SiteHeader />
         <main className="mx-auto max-w-xl px-5 py-16">
           <h1 className="display text-5xl">We cannot find that album</h1>
-          <p className="mt-3 text-white/55">
+          <p className="mt-3 text-[var(--muted)]">
             The link needs the private token from checkout. If you lost it, start a new one.
           </p>
           <Link href="/make" className="btn-rust mt-6 inline-flex">

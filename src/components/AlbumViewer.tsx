@@ -1,18 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AlbumPage, AlbumPhoto, PublicAlbum } from "@/lib/types";
 import { formatWindow } from "@/lib/years";
+import { PhotoLightbox } from "./PhotoLightbox";
 import { PhotoPlate } from "./PhotoPlate";
 
 export function AlbumViewer({
   album,
   developing = false,
   progress,
+  titleOverride,
 }: {
   album: PublicAlbum;
   developing?: boolean;
   progress?: { done: number; total: number };
+  titleOverride?: string;
 }) {
   const pages = album.pages;
   const [page, setPage] = useState(0);
@@ -20,19 +23,33 @@ export function AlbumViewer({
   const current = pages[page];
 
   const title = useMemo(() => {
-    const names = album.members.map((m) => m.name).filter(Boolean);
+    if (titleOverride) return titleOverride;
+    const names = album.members.map((member) => member.name).filter(Boolean);
     if (names.length === 0) return "Untitled album";
     if (names.length === 1) return names[0];
     if (names.length === 2) return `${names[0]} & ${names[1]}`;
     return `The ${names[0]} household`;
-  }, [album.members]);
+  }, [album.members, titleOverride]);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (open) {
+        if (event.key === "Escape") setOpen(null);
+        return;
+      }
+      if (event.key === "ArrowRight") setPage((p) => Math.min(pages.length - 1, p + 1));
+      if (event.key === "ArrowLeft") setPage((p) => Math.max(0, p - 1));
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, pages.length]);
 
   if (!current) {
     return (
-      <div className="page-leaf grid min-h-[28rem] place-items-center p-8 text-center">
+      <div className="page-leaf grid min-h-[26rem] place-items-center p-8 text-center">
         <div>
           <p className="display text-4xl">Developing</p>
-          <p className="mt-3 text-white/50">
+          <p className="muted mt-3">
             {developing
               ? "Laying out names, years, and the order of things."
               : "Nothing to turn yet."}
@@ -54,8 +71,10 @@ export function AlbumViewer({
           <p className="kicker">{formatWindow(album.start, album.end)}</p>
           <h1 className="display mt-2 text-5xl">{title}</h1>
         </div>
-        <p className="text-sm text-white/45">
-          {pct != null ? `${progress?.done}/${progress?.total} photographs` : `Page ${current.index} / ${pages.length}`}
+        <p className="text-sm text-[var(--muted)]">
+          {pct != null
+            ? `${progress?.done}/${progress?.total} photographs`
+            : `Page ${current.index} / ${pages.length}`}
         </p>
       </div>
 
@@ -68,11 +87,11 @@ export function AlbumViewer({
       <div className="page-leaf p-5 sm:p-8">
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="display text-3xl sm:text-5xl">{current.heading}</h2>
-          <span className="text-sm uppercase tracking-[0.16em] text-white/35">
+          <span className="text-sm uppercase tracking-[0.16em] text-[var(--muted)]">
             {String(current.index).padStart(2, "0")}
           </span>
         </div>
-        <div className={`mt-6 grid gap-3 ${gridClass(current)}`}>
+        <div className={`mt-6 grid gap-4 ${gridClass(current)}`}>
           {current.photos.map((photo) => (
             <PhotoPlate
               key={photo.id}
@@ -103,6 +122,17 @@ export function AlbumViewer({
         >
           Previous
         </button>
+        <div className="page-dots" aria-label="Album pages">
+          {pages.map((item, i) => (
+            <button
+              key={item.index}
+              type="button"
+              data-on={i === page}
+              aria-label={`Page ${item.index}`}
+              onClick={() => setPage(i)}
+            />
+          ))}
+        </div>
         <button
           type="button"
           className="btn-ghost"
@@ -113,40 +143,13 @@ export function AlbumViewer({
         </button>
       </div>
 
-      {open && (
-        <div className="lightbox" onClick={() => setOpen(null)} role="presentation">
-          <figure
-            className="w-full max-w-2xl overflow-hidden rounded-3xl bg-[var(--surface)] p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="overflow-hidden rounded-2xl bg-black">
-              {open.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={open.imageUrl} alt={open.title} className="max-h-[70vh] w-full object-contain" />
-              ) : (
-                <div className="grid h-72 place-items-center text-white/40">Still developing</div>
-              )}
-            </div>
-            <figcaption className="mt-4 px-1">
-              <p className="display text-3xl">{open.title}</p>
-              <p className="mt-1 text-sm text-[var(--accent)]">{open.yearLabel}</p>
-              <p className="mt-3 leading-relaxed text-white/65">{open.description}</p>
-              {open.members.length > 0 && (
-                <p className="mt-3 text-sm text-white/35">{open.members.join(" · ")}</p>
-              )}
-            </figcaption>
-            <button type="button" className="btn-ghost mt-5" onClick={() => setOpen(null)}>
-              Close
-            </button>
-          </figure>
-        </div>
-      )}
+      {open && <PhotoLightbox photo={open} onClose={() => setOpen(null)} />}
     </div>
   );
 }
 
 function gridClass(page: AlbumPage): string {
   const n = page.photos.length;
-  if (n <= 1) return "grid-cols-1 max-w-md mx-auto";
+  if (n <= 1) return "mx-auto max-w-md grid-cols-1";
   return "sm:grid-cols-2";
 }

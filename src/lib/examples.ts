@@ -127,7 +127,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             description:
               "Adaeze checks the sky the old way, with her eyes. Chidi is already packed.",
             yearLabel: "2076",
-            imageUrl: "/examples/okafor-balcony.png",
+            imageUrl: "/examples/okafor-balcony.png?v=2112",
             members: ["Adaeze", "Chidi"],
           },
         ],
@@ -141,7 +141,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             title: "Ordered clouds",
             description: "They paid extra for late-afternoon gold. The children ate the snacks first.",
             yearLabel: "2112",
-            imageUrl: "/examples/okafor-clouds.png",
+            imageUrl: "/examples/okafor-clouds.png?v=2112",
             members: ["Adaeze", "Kelechi", "Amaka"],
           },
           {
@@ -149,7 +149,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             title: "Chidi, still analog",
             description: "He brought a paper album onto an orbital tram and nobody stopped him.",
             yearLabel: "2112",
-            imageUrl: "/examples/okafor-chidi.png",
+            imageUrl: "/examples/okafor-chidi.png?v=2112",
             members: ["Chidi"],
           },
         ],

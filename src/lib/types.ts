@@ -23,6 +23,16 @@ export type AlbumEvent = {
   description: string;
 };
 
+export type PhotoVersionKind = "original" | "redo";
+
+export type PhotoVersion = {
+  id: string;
+  url: string;
+  prompt: string;
+  createdAt: string;
+  kind: PhotoVersionKind;
+};
+
 export type AlbumPhoto = {
   id: string;
   title: string;
@@ -30,6 +40,8 @@ export type AlbumPhoto = {
   yearLabel: string;
   imageUrl: string | null;
   members: string[];
+  versions?: PhotoVersion[];
+  selectedVersionId?: string;
 };
 
 export type AlbumPage = {
@@ -107,10 +119,36 @@ export type MerchOrder = {
   createdAt: string;
 };
 
+export type PurchaseKind = "digital" | "hardcover" | "softcover" | "merch" | "extra_album";
+
+export type Purchase = {
+  id: string;
+  kind: PurchaseKind;
+  albumId: string;
+  label: string;
+  amountUsd: number;
+  creditsGranted: number;
+  createdAt: string;
+  stripeSessionId?: string;
+};
+
+export type User = {
+  id: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+  editCredits: number;
+  albumIds: string[];
+  purchases: Purchase[];
+};
+
 export type Album = {
   id: string;
   tokenHash: string;
   email: string | null;
+  userId?: string;
+  pendingEditCredits?: number;
+  recordedPurchaseKeys?: string[];
   status: AlbumStatus;
   members: FamilyMember[];
   start: AlbumYear;
@@ -131,7 +169,10 @@ export type Album = {
   pendingCreditToken?: string;
 };
 
-export type PublicAlbum = Omit<Album, "tokenHash" | "merchDrafts" | "pendingCreditToken">;
+export type PublicAlbum = Omit<
+  Album,
+  "tokenHash" | "merchDrafts" | "pendingCreditToken" | "recordedPurchaseKeys"
+>;
 
 export type AlbumDraftInput = {
   members: FamilyMember[];

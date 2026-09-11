@@ -3,8 +3,10 @@ import { geminiConfigured, generateGeminiPhotograph } from "./gemini";
 import { getOpenAI, imageModel, openaiConfigured } from "./openai";
 import { ALBUM_PAGE_COUNT } from "./site";
 import { storeBinary } from "./store";
-import type { Album, AlbumPage, AlbumPhoto } from "./types";
+import { newId } from "./token";
+import type { Album, AlbumPage, AlbumPhoto, PhotoVersion } from "./types";
 import { formatWindow, formatYear, interpolateYears, periodHint } from "./years";
+import { findAlbumPhoto, photoVersions } from "./photos";
 
 const PLAN_SCHEMA_HINT = `{
   "pages": [
@@ -73,6 +75,7 @@ export function fallbackPlan(album: Album): AlbumPage[] {
         yearLabel,
         imageUrl: null,
         members: featured,
+        versions: [],
       };
     });
 
@@ -142,6 +145,7 @@ function normalizePages(pages: AlbumPage[]): AlbumPage[] {
       yearLabel: String(photo.yearLabel || ""),
       imageUrl: null,
       members: Array.isArray(photo.members) ? photo.members.map(String).slice(0, 6) : [],
+      versions: [],
     }));
     return {
       index: i + 1,
@@ -156,6 +160,7 @@ function normalizePages(pages: AlbumPage[]): AlbumPage[] {
               yearLabel: "",
               imageUrl: null,
               members: [],
+              versions: [],
             },
           ],
     };
@@ -219,8 +224,20 @@ Photograph only. No captions, no borders, no typography, no watermark, no split-
   }
 
   try {
-    const url = await renderPhoto(prompt, useRefs.flatMap((m) => m.photos.map((p) => p.url)), album.id, photo.id);
-    page.photos[slot.photo] = { ...photo, imageUrl: url };
+    const version = await renderVersion(
+      prompt,
+      useRefs.flatMap((m) => m.photos.map((p) => p.url)),
+      album.id,
+      photo.id,
+      "original"
+    );
+    version.prompt = photo.description;
+    page.photos[slot.photo] = {
+      ...photo,
+      imageUrl: version.url,
+      versions: [version],
+      selectedVersionId: version.id,
+    };
     const { done, total } = albumProgress(album);
     return {
       ...album,
@@ -240,12 +257,13 @@ function toSignedFallback(album: Album): number {
   return album.start.era === "BC" ? album.start.year : album.start.year;
 }
 
-async function renderPhoto(
+async function renderVersion(
   prompt: string,
   referenceUrls: string[],
   albumId: string,
-  photoId: string
-): Promise<string> {
+  photoId: string,
+  kind: PhotoVersion["kind"]
+): Promise<PhotoVersion> {
   const refs = referenceUrls.slice(0, 4);
   let buffer: Buffer | null = null;
 
@@ -255,12 +273,77 @@ async function renderPhoto(
     buffer = await generateOpenAiPhotograph(prompt, refs);
   }
 
+  const versionId = newId("ver");
   const stored = await storeBinary(
-    `albums/${albumId}/photos/${photoId}.png`,
+    `albums/${albumId}/photos/${photoId}/${versionId}.png`,
     buffer,
     "image/png"
   );
-  return stored.url;
+  return {
+    id: versionId,
+    url: stored.url,
+    prompt,
+    createdAt: new Date().toISOString(),
+    kind,
+  };
+}
+
+export async function redoPhotograph(
+  album: Album,
+  photoId: string,
+  direction: string
+): Promise<Album> {
+  const found = findAlbumPhoto(album.pages, photoId);
+  if (!found) throw new Error("That photograph is not in this album.");
+  if (!found.photo.imageUrl) throw new Error("Wait until this photograph exists.");
+
+  const page = album.pages[found.pageIndex];
+  const photo = found.photo;
+  const refs = album.members.filter((m) =>
+    photo.members.some((n) => n.toLowerCase() === m.name.toLowerCase())
+  );
+  const useRefs = refs.length ? refs : album.members.slice(0, 2);
+  const yearBits = photo.yearLabel.toLowerCase().includes("bc")
+    ? { year: parseInt(photo.yearLabel, 10) || 1, era: "BC" as const }
+    : { year: parseInt(photo.yearLabel, 10) || toSignedFallback(album), era: "AD" as const };
+
+  const prompt = `Create a single photograph for a physical family album.
+
+It should look like a real printed photograph from ${photo.yearLabel}, not a digital collage or poster.
+Period: ${periodHint(yearBits)}.
+Mood tags: ${album.tags.join(", ") || "Candid"}.
+People (keep a strong likeness to any reference photos): ${useRefs.map((m) => `${m.name} — ${m.description}`).join("; ")}.
+Age them to fit ${photo.yearLabel} inside a life that runs ${formatWindow(album.start, album.end)}. Same faces, older or younger as the year demands.
+Scene title: ${photo.title}
+What is happening: ${photo.description}
+Page heading: ${page.heading}
+
+The owner asked for this change. Follow it closely, but keep it one photograph from the same year and family:
+${direction.trim()}
+
+Photograph only. No captions, no borders, no typography, no watermark, no split-screen. One moment, one camera.`;
+
+  if (!geminiConfigured() && !openaiConfigured()) {
+    throw new Error("No image model is configured (need GEMINI_API_KEY for Nano Banana).");
+  }
+
+  const version = await renderVersion(
+    prompt,
+    useRefs.flatMap((m) => m.photos.map((p) => p.url)),
+    album.id,
+    photo.id,
+    "redo"
+  );
+  version.prompt = direction.trim();
+  const versions = [...photoVersions(photo), version];
+  page.photos[found.photoIndex] = {
+    ...photo,
+    imageUrl: version.url,
+    versions,
+    selectedVersionId: version.id,
+  };
+  album.updatedAt = new Date().toISOString();
+  return album;
 }
 
 async function generateOpenAiPhotograph(

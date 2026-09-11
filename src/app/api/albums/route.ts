@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
 import { saveAlbum, toPublicAlbum } from "@/lib/store";
 import { createAlbumToken, hashToken, newId } from "@/lib/token";
 import type { Album } from "@/lib/types";
+import { attachAlbumToUser } from "@/lib/users";
 
 export const runtime = "nodejs";
 
@@ -30,5 +32,10 @@ export async function POST() {
     updatedAt: now,
   };
   await saveAlbum(album);
+  const user = await getSessionUser();
+  if (user) {
+    album.email = album.email || user.email;
+    await attachAlbumToUser(user, album);
+  }
   return NextResponse.json({ album: toPublicAlbum(album), token });
 }

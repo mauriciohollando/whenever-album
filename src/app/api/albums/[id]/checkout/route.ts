@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { consumeCredit, loadCredit } from "@/lib/credits";
 import { quoteCart, type PrintFinish } from "@/lib/commerce";
+import { emailLooksOk, normalizeEmail } from "@/lib/auth";
+import { promoMakesDigitalFree } from "@/lib/promos";
 import { applyAlbumPayment } from "@/lib/fulfill";
 import { siteOrigin } from "@/lib/site";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 import { stripeItem, stripeShipping, STRIPE_SHIP_COUNTRIES } from "@/lib/stripeCatalog";
+import { loadAccessibleAlbum } from "@/lib/access";
 import { loadAlbum, saveAlbum } from "@/lib/store";
-import { tokensMatch } from "@/lib/token";
+import { recordPurchase } from "@/lib/users";
 import { parseDraft } from "@/lib/validate";
 import type { Album } from "@/lib/types";
 
@@ -35,10 +38,11 @@ export async function POST(
   const { id } = await params;
   const body = (await request.json()) as Record<string, unknown>;
   const token = String(body.token || "");
-  const album = await loadAlbum(id);
-  if (!album || !tokensMatch(token, album.tokenHash)) {
+  const found = await loadAccessibleAlbum(id, token);
+  if (!found) {
     return NextResponse.json({ error: "Album not found." }, { status: 404 });
   }
+  const album = found.album;
   if (album.status !== "draft") {
     return NextResponse.json({ error: "This album is already paid for." }, { status: 409 });
   }
@@ -54,7 +58,16 @@ export async function POST(
   const extraAlbum = body.extraAlbum === true || body.extraAlbum === "1";
   const print = printFrom(body);
   const country = String(body.country || "US").toUpperCase();
-  const quote = quoteCart({ extraAlbum, print, country, digitalPaid: !!creditToken });
+  const freeDigital = promoMakesDigitalFree(String(body.promoCode || ""));
+  const email = normalizeEmail(String(body.email || album.email || ""));
+  if (email && emailLooksOk(email)) album.email = email;
+  const quote = quoteCart({
+    extraAlbum,
+    print,
+    country,
+    digitalPaid: !!creditToken,
+    freeDigital,
+  });
   let usedCredit = false;
 
   if (creditToken) {
@@ -70,11 +83,34 @@ export async function POST(
       album.paidWithCredit = true;
       album.updatedAt = new Date().toISOString();
       await saveAlbum(album);
+      await recordPurchase(album, {
+        kind: "digital",
+        label: "Digital album (credit)",
+        amountUsd: 0,
+        creditsGranted: 0,
+        stripeSessionId: `credit:${album.id}`,
+      });
       return NextResponse.json({
-        url: `${siteOrigin()}/album/${album.id}?token=${token}&checkout=success`,
+        url: `${siteOrigin()}/api/auth/claim?album=${album.id}&token=${token}&next=${encodeURIComponent(`/album/${album.id}?token=${token}&checkout=success`)}`,
       });
     }
     album.pendingCreditToken = creditToken;
+  }
+
+  if (freeDigital && !print && !quote.extraAlbumUsd && !usedCredit) {
+    album.status = "paid";
+    album.updatedAt = new Date().toISOString();
+    await saveAlbum(album);
+    await recordPurchase(album, {
+      kind: "digital",
+      label: "Digital album (promo)",
+      amountUsd: 0,
+      creditsGranted: 0,
+      stripeSessionId: `promo:${album.id}`,
+    });
+    return NextResponse.json({
+      url: `${siteOrigin()}/api/auth/claim?album=${album.id}&token=${token}&next=${encodeURIComponent(`/album/${album.id}?token=${token}&checkout=success`)}`,
+    });
   }
 
   if (!stripeEnabled()) {
@@ -82,7 +118,7 @@ export async function POST(
   }
   const origin = siteOrigin();
 
-  const line_items = usedCredit
+  const line_items = usedCredit || quote.digitalUsd === 0
     ? []
     : [stripeItem("album", "Whenever digital album", quote.digitalUsd)];
   if (!usedCredit && quote.extraAlbumUsd) {
@@ -101,11 +137,28 @@ export async function POST(
     line_items.push(stripeItem("softcover", "Softcover photo book", quote.printUsd));
   }
 
+  if (line_items.length === 0) {
+    album.status = "paid";
+    album.updatedAt = new Date().toISOString();
+    await saveAlbum(album);
+    await recordPurchase(album, {
+      kind: "digital",
+      label: "Digital album",
+      amountUsd: 0,
+      creditsGranted: 0,
+      stripeSessionId: `free:${album.id}`,
+    });
+    return NextResponse.json({
+      url: `${siteOrigin()}/api/auth/claim?album=${album.id}&token=${token}&next=${encodeURIComponent(`/album/${album.id}?token=${token}&checkout=success`)}`,
+    });
+  }
+
   const session = await getStripe().checkout.sessions.create({
     mode: "payment",
     line_items,
-    success_url: `${origin}/album/${album.id}?token=${token}&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${origin}/api/auth/claim?album=${album.id}&token=${token}&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/make?album=${album.id}&token=${token}&checkout=cancel`,
+    customer_email: album.email || undefined,
     allow_promotion_codes: true,
     billing_address_collection: "auto",
     shipping_address_collection: print

@@ -16,7 +16,13 @@ function albumPath(id: string): string {
 }
 
 export function toPublicAlbum(album: Album): PublicAlbum {
-  const { tokenHash: _tokenHash, merchDrafts: _drafts, pendingCreditToken: _pending, ...rest } = album;
+  const {
+    tokenHash: _tokenHash,
+    merchDrafts: _drafts,
+    pendingCreditToken: _pending,
+    recordedPurchaseKeys: _keys,
+    ...rest
+  } = album;
   return rest;
 }
 

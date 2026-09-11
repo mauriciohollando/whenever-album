@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatUsd, quoteCart } from "@/lib/commerce";
+import { promoMakesDigitalFree } from "@/lib/promos";
 import { MAX_EVENTS, MAX_MEMBERS, MAX_PHOTOS_PER_MEMBER } from "@/lib/site";
 import { ALBUM_TAGS, MAX_TAGS } from "@/lib/tags";
 import type { AlbumDraftInput, AlbumEvent, AlbumYear, FamilyMember, PublicAlbum } from "@/lib/types";
@@ -47,8 +48,15 @@ export function AlbumMaker({
   const [busy, setBusy] = useState(false);
   const [help, setHelp] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(canceled ? "Checkout was left on the table. The album is still here." : null);
-  const [pay, setPay] = useState<PayChoices>({ extraAlbum: false, print: null, country: "US" });
-  const cart = quoteCart({ ...pay, digitalPaid: !!creditToken });
+  const [pay, setPay] = useState<PayChoices>({
+    extraAlbum: false,
+    print: null,
+    country: "US",
+    promoCode: "",
+    email: "",
+  });
+  const freeDigital = promoMakesDigitalFree(pay.promoCode);
+  const cart = quoteCart({ ...pay, digitalPaid: !!creditToken, freeDigital });
 
   const draft: AlbumDraftInput = useMemo(
     () => ({
@@ -131,6 +139,8 @@ export function AlbumMaker({
           print: pay.print,
           country: pay.country,
           creditToken: creditToken || undefined,
+          promoCode: pay.promoCode,
+          email: pay.email,
         }),
       });
       const data = await res.json();
@@ -200,8 +210,8 @@ export function AlbumMaker({
             <button type="button" className="btn-rust" disabled={busy} onClick={payNow}>
               {busy
                 ? "Opening checkout…"
-                : creditToken && !pay.print
-                  ? "Create with your credit"
+                : (creditToken || freeDigital) && cart.totalUsd === 0
+                  ? "Create album"
                   : `Pay ${formatUsd(cart.totalUsd)} and create`}
             </button>
           ) : null}

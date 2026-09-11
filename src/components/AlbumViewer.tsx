@@ -12,11 +12,21 @@ export function AlbumViewer({
   developing = false,
   progress,
   titleOverride,
+  token,
+  editCredits,
+  signedIn,
+  onAlbum,
+  onCredits,
 }: {
   album: PublicAlbum;
   developing?: boolean;
   progress?: { done: number; total: number };
   titleOverride?: string;
+  token?: string;
+  editCredits?: number;
+  signedIn?: boolean;
+  onAlbum?: (album: PublicAlbum) => void;
+  onCredits?: (credits: number) => void;
 }) {
   const pages = album.pages;
   const [page, setPage] = useState(0);
@@ -147,7 +157,18 @@ export function AlbumViewer({
         </button>
       </div>
 
-      {open && <PhotoLightbox photo={open} onClose={() => setOpen(null)} />}
+      {open && (
+        <PhotoLightbox
+          photo={album.pages.flatMap((page) => page.photos).find((item) => item.id === open.id) || open}
+          album={onAlbum ? album : undefined}
+          token={token}
+          editCredits={editCredits}
+          signedIn={signedIn}
+          onClose={() => setOpen(null)}
+          onAlbum={onAlbum}
+          onCredits={onCredits}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,8 @@ import { AlbumMaker } from "@/components/AlbumMaker";
 
 export const dynamic = "force-dynamic";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { ownsAlbum } from "@/lib/access";
+import { getSessionUser } from "@/lib/auth";
 import { loadAlbum, toPublicAlbum } from "@/lib/store";
 import { tokensMatch } from "@/lib/token";
 
@@ -12,9 +14,14 @@ export default async function MakePage({
 }) {
   const q = await searchParams;
   let initialAlbum;
-  if (q.album && q.token) {
+  const user = await getSessionUser();
+  if (q.album) {
     const album = await loadAlbum(q.album);
-    if (album && tokensMatch(q.token, album.tokenHash) && album.status === "draft") {
+    const allowed =
+      album &&
+      album.status === "draft" &&
+      ((q.token && tokensMatch(q.token, album.tokenHash)) || (!!user && ownsAlbum(user, album)));
+    if (allowed && album) {
       initialAlbum = toPublicAlbum(album);
     }
   }

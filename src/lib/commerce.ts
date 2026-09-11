@@ -5,6 +5,9 @@ export const SOFTCOVER_USD = 24;
 export const HARDCOVER_USD = 39;
 export const HARDCOVER_BUNDLE_USD = 49;
 export const HARDCOVER_IN_CART_USD = HARDCOVER_BUNDLE_USD - DIGITAL_USD;
+export const BOOK_LATER_MARKUP = 1.05;
+export const BUNDLE_REDO_CREDITS = 30;
+export const LATER_REDO_CREDITS = 10;
 
 export type PrintFinish = "softcover" | "hardcover";
 export type MerchSku = "tee" | "hoodie" | "mug" | "poster";
@@ -104,6 +107,7 @@ export type CartInput = {
   print: PrintFinish | null;
   country: string;
   digitalPaid?: boolean;
+  freeDigital?: boolean;
 };
 
 export type CartQuote = {
@@ -123,8 +127,9 @@ function zoneAmount(table: { US: number; CA: number; default: number }, country:
 }
 
 export function quoteCart(input: CartInput): CartQuote {
+  const digitalCovered = !!input.digitalPaid || !!input.freeDigital;
   const extraAlbumUsd = input.digitalPaid ? 0 : input.extraAlbum ? EXTRA_ALBUM_USD : 0;
-  const hardcoverBundled = input.print === "hardcover" && !input.digitalPaid;
+  const hardcoverBundled = input.print === "hardcover" && !digitalCovered;
   const printUsd =
     input.print === "hardcover"
       ? hardcoverBundled
@@ -140,7 +145,7 @@ export function quoteCart(input: CartInput): CartQuote {
         ? "Softcover photo book (ships after we develop)"
         : null;
   const shippingUsd = input.print ? zoneAmount(BOOK_SHIP_USD, input.country) : 0;
-  const digitalUsd = input.digitalPaid ? 0 : DIGITAL_USD;
+  const digitalUsd = digitalCovered ? 0 : DIGITAL_USD;
   return {
     digitalUsd,
     extraAlbumUsd,
@@ -169,6 +174,27 @@ export function dollarsToCents(amount: number): number {
 
 export function formatUsd(amount: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+}
+
+export function laterBookUsd(finish: PrintFinish): number {
+  const base = finish === "hardcover" ? HARDCOVER_USD : SOFTCOVER_USD;
+  return Math.round(base * BOOK_LATER_MARKUP * 100) / 100;
+}
+
+export function quoteLaterBook(finish: PrintFinish, country: string): {
+  printUsd: number;
+  shippingUsd: number;
+  totalUsd: number;
+  credits: number;
+} {
+  const printUsd = laterBookUsd(finish);
+  const shippingUsd = zoneAmount(BOOK_SHIP_USD, country);
+  return {
+    printUsd,
+    shippingUsd,
+    totalUsd: printUsd + shippingUsd,
+    credits: LATER_REDO_CREDITS,
+  };
 }
 
 export function prodigiSku(finish: PrintFinish): string {

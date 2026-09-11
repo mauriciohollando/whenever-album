@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import { loadAccessibleAlbum } from "@/lib/access";
 import { fulfillPrintIfNeeded } from "@/lib/fulfill";
 import { albumProgress, generateNextPhoto, planAlbum } from "@/lib/generate";
-import { loadAlbum, saveAlbum, toPublicAlbum } from "@/lib/store";
-import { tokensMatch } from "@/lib/token";
+import { saveAlbum, toPublicAlbum } from "@/lib/store";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -19,10 +19,11 @@ export async function POST(
     new URL(request.url).searchParams.get("token") ||
     "";
 
-  const album = await loadAlbum(id);
-  if (!album || !tokensMatch(token, album.tokenHash)) {
+  const found = await loadAccessibleAlbum(id, token);
+  if (!found) {
     return NextResponse.json({ error: "Album not found." }, { status: 404 });
   }
+  const album = found.album;
   if (album.status === "draft") {
     return NextResponse.json({ error: "Pay for the album first." }, { status: 402 });
   }

@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { merchProduct, quoteMerch, type MerchSku } from "@/lib/commerce";
+import { loadAccessibleAlbum } from "@/lib/access";
+import { quoteLaterBook, type PrintFinish } from "@/lib/commerce";
 import { siteOrigin } from "@/lib/site";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
 import { stripeItem, stripeShipping, STRIPE_SHIP_COUNTRIES } from "@/lib/stripeCatalog";
-import { loadAccessibleAlbum } from "@/lib/access";
-import { saveAlbum } from "@/lib/store";
-import { newId } from "@/lib/token";
 
 export const runtime = "nodejs";
 
@@ -19,53 +17,41 @@ export async function POST(
 
   const { id } = await params;
   const body = (await request.json()) as Record<string, unknown>;
-  const token = String(body.token || "");
-  const found = await loadAccessibleAlbum(id, token);
+  const found = await loadAccessibleAlbum(id, String(body.token || ""));
   if (!found) {
     return NextResponse.json({ error: "Album not found." }, { status: 404 });
   }
-  const album = found.album;
+  const { album } = found;
   if (album.status !== "ready") {
     return NextResponse.json({ error: "Wait until the album is developed." }, { status: 409 });
   }
+  if (album.printOrder && album.printOrder.status !== "failed" && album.printOrder.status !== "refunded") {
+    return NextResponse.json({ error: "A printed book is already on the way." }, { status: 409 });
+  }
 
-  const sku = String(body.sku || "") as MerchSku;
-  const product = merchProduct(sku);
-  const photoId = String(body.photoId || "");
-  const artUrl = String(body.artUrl || "");
-  const photo = album.pages.flatMap((page) => page.photos).find((item) => item.id === photoId);
-  if (!product || !photo?.imageUrl || !artUrl) {
-    return NextResponse.json({ error: "Pick a photograph and a product." }, { status: 400 });
+  const print = String(body.print || "") as PrintFinish;
+  if (print !== "hardcover" && print !== "softcover") {
+    return NextResponse.json({ error: "Pick hardcover or softcover." }, { status: 400 });
   }
 
   const country = String(body.country || "US").toUpperCase();
-  const quote = quoteMerch(sku, country);
-  const draftId = newId("mch");
-  album.merchDrafts = {
-    ...(album.merchDrafts || {}),
-    [draftId]: {
-      id: draftId,
-      sku,
-      photoId,
-      color: String(body.color || product.colors[0].id),
-      size: String(body.size || product.sizes[0]),
-      crop: {
-        x: Number(body.cropX ?? 50),
-        y: Number(body.cropY ?? 50),
-        zoom: Number(body.cropZoom ?? 1),
-      },
-      artUrl,
-      country,
-    },
-  };
-  await saveAlbum(album);
-
+  const quote = quoteLaterBook(print, country);
   const origin = siteOrigin();
+  const token = String(body.token || "");
+  const returnToken = token ? `&token=${token}` : "";
+
   const session = await getStripe().checkout.sessions.create({
     mode: "payment",
-    line_items: [stripeItem(sku, `${product.name} · ${photo.title}`, quote.priceUsd)],
-    success_url: `${origin}/api/auth/claim?album=${album.id}${token ? `&token=${token}` : ""}&merch=success&session_id={CHECKOUT_SESSION_ID}`,
+    line_items: [
+      stripeItem(
+        print === "hardcover" ? "hardcover" : "softcover",
+        `${print === "hardcover" ? "Hardcover" : "Softcover"} photo book`,
+        quote.printUsd
+      ),
+    ],
+    success_url: `${origin}/api/auth/claim?album=${album.id}${returnToken}&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/album/${album.id}${token ? `?token=${token}` : ""}`,
+    customer_email: album.email || undefined,
     allow_promotion_codes: true,
     billing_address_collection: "auto",
     shipping_address_collection: {
@@ -76,15 +62,15 @@ export async function POST(
     ],
     metadata: {
       product: "whenever",
-      sku: "merch",
+      sku: "print",
       album_id: album.id,
-      merch_draft_id: draftId,
+      print,
+      later: "1",
     },
   });
 
   if (!session.url) {
     return NextResponse.json({ error: "Checkout did not return a URL." }, { status: 500 });
   }
-
-  return NextResponse.json({ url: session.url });
+  return NextResponse.json({ url: session.url, quote });
 }

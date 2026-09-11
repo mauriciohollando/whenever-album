@@ -29,7 +29,7 @@ export const STEP_HELP: StepHelp[] = [
   },
   {
     title: "Ready to create",
-    body: "The digital album is $12. You can add a second album for $3 more, and a printed book as a preorder — we print it after the photographs exist. Hoodies and the rest wait on the finished album.",
+    body: "The digital album is $12. Order a printed book with it and you get 30 credits to retake photographs with your own prompt. The same book later costs 5% more and comes with 10 credits. You can add a second album for $3 more. Hoodies wait on the finished album.",
   },
 ];
 

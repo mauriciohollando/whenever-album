@@ -5,6 +5,8 @@ import { AlbumExperience } from "@/components/AlbumExperience";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { applyStripeSession } from "@/lib/fulfill";
 import { getStripe, stripeEnabled } from "@/lib/stripe";
+import { getSessionUser } from "@/lib/auth";
+import { ownsAlbum } from "@/lib/access";
 import { loadAlbum, toPublicAlbum } from "@/lib/store";
 import { tokensMatch } from "@/lib/token";
 import type { Album } from "@/lib/types";
@@ -34,8 +36,12 @@ export default async function AlbumPage({
   const q = await searchParams;
   const token = q.token || "";
   const found = await loadAlbum(id);
+  const user = await getSessionUser();
+  const allowed =
+    !!found &&
+    ((token && tokensMatch(token, found.tokenHash)) || (!!user && ownsAlbum(user, found)));
 
-  if (!found || !tokensMatch(token, found.tokenHash)) {
+  if (!found || !allowed) {
     return (
       <div className="min-h-full">
         <SiteHeader />
@@ -77,7 +83,11 @@ export default async function AlbumPage({
             Payment is clearing. Refresh in a moment if the pages do not start.
           </p>
         )}
-        <AlbumExperience initial={toPublicAlbum(album)} token={token} />
+        <AlbumExperience
+          initial={toPublicAlbum(album)}
+          token={token}
+          account={user ? { email: user.email, editCredits: user.editCredits } : null}
+        />
       </main>
       <SiteFooter />
     </div>

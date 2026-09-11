@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { MAX_PHOTO_BYTES } from "@/lib/site";
-import { loadAlbum, storeBinary } from "@/lib/store";
-import { tokensMatch } from "@/lib/token";
+import { loadAccessibleAlbum } from "@/lib/access";
+import { storeBinary } from "@/lib/store";
 
 export const runtime = "nodejs";
 
@@ -26,10 +26,11 @@ export async function POST(
     return NextResponse.json({ error: "Keep the print file under 8 MB." }, { status: 400 });
   }
 
-  const album = await loadAlbum(id);
-  if (!album || !tokensMatch(token, album.tokenHash)) {
+  const found = await loadAccessibleAlbum(id, token);
+  if (!found) {
     return NextResponse.json({ error: "Album not found." }, { status: 404 });
   }
+  const album = found.album;
   if (album.status === "draft") {
     return NextResponse.json({ error: "Pay for the album first." }, { status: 402 });
   }

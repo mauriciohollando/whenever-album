@@ -1,15 +1,18 @@
 import { addressFromStripe } from "./address";
+import { DIGITAL_USD, EXTRA_ALBUM_USD, HARDCOVER_USD, SOFTCOVER_USD, laterBookUsd } from "./commerce";
 import { consumeCredit, issueExtraAlbumCredit } from "./credits";
 import { prodigiEnabled, submitProdigiBook } from "./prodigi";
 import { storePrintFiles } from "./printBook";
 import { printfulEnabled, submitPrintfulOrder } from "./printful";
 import { loadAlbum, saveAlbum } from "./store";
 import { newId } from "./token";
+import { bookPurchaseKind, creditsForBook, recordPurchase } from "./users";
 import type { Album, MerchOrder, PrintFinish } from "./types";
 import type Stripe from "stripe";
 
 export async function applyAlbumPayment(album: Album, session: Stripe.Checkout.Session): Promise<Album> {
-  if (album.status === "draft") {
+  const wasDraft = album.status === "draft";
+  if (wasDraft) {
     album.status = "paid";
   }
   if (album.pendingCreditToken) {
@@ -38,7 +41,42 @@ export async function applyAlbumPayment(album: Album, session: Stripe.Checkout.S
   }
 
   await saveAlbum(album);
-  return album;
+
+  if (wasDraft) {
+    await recordPurchase(album, {
+      kind: "digital",
+      label: "Digital album",
+      amountUsd: album.paidWithCredit ? 0 : DIGITAL_USD,
+      creditsGranted: 0,
+      stripeSessionId: session.id,
+    });
+  }
+  if (finish === "hardcover" || finish === "softcover") {
+    const later = session.metadata?.later === "1";
+    await recordPurchase(album, {
+      kind: bookPurchaseKind(finish),
+      label: later ? `${finish} photo book (later)` : `${finish} photo book (with album)`,
+      amountUsd: later
+        ? laterBookUsd(finish)
+        : finish === "hardcover"
+          ? HARDCOVER_USD
+          : SOFTCOVER_USD,
+      creditsGranted: creditsForBook(later ? "later" : "bundle"),
+      stripeSessionId: session.id,
+    });
+  }
+  if (session.metadata?.extra_album === "1") {
+    await recordPurchase(album, {
+      kind: "extra_album",
+      label: "Second album credit",
+      amountUsd: EXTRA_ALBUM_USD,
+      creditsGranted: 0,
+      stripeSessionId: session.id,
+    });
+  }
+
+  const next = (await loadAlbum(album.id)) || album;
+  return next;
 }
 
 export async function fulfillPrintIfNeeded(album: Album): Promise<Album> {
@@ -103,7 +141,15 @@ export async function applyMerchPayment(album: Album, session: Stripe.Checkout.S
   album.email = session.customer_details?.email || session.customer_email || album.email;
   album.updatedAt = new Date().toISOString();
   await saveAlbum(album);
-  return album;
+  const product = order.sku;
+  await recordPurchase(album, {
+    kind: "merch",
+    label: `${product} · ${order.photoId}`,
+    amountUsd: 0,
+    creditsGranted: 0,
+    stripeSessionId: session.id,
+  });
+  return (await loadAlbum(album.id)) || album;
 }
 
 export async function applyStripeSession(session: Stripe.Checkout.Session): Promise<void> {
@@ -116,8 +162,41 @@ export async function applyStripeSession(session: Stripe.Checkout.Session): Prom
     await applyMerchPayment(album, session);
     return;
   }
+  if (session.metadata?.sku === "print" || session.metadata?.later === "1") {
+    await applyLaterPrintPayment(album, session);
+    return;
+  }
   if (album.status === "draft" || !album.printOrder) {
     await applyAlbumPayment(album, session);
   }
+}
+
+export async function applyLaterPrintPayment(album: Album, session: Stripe.Checkout.Session): Promise<Album> {
+  album.email = session.customer_details?.email || session.customer_email || album.email;
+  const finish = session.metadata?.print as PrintFinish | undefined;
+  if (finish !== "hardcover" && finish !== "softcover") return album;
+  if (album.printOrder && album.printOrder.status !== "failed" && album.printOrder.status !== "refunded") {
+    return album;
+  }
+  album.printOrder = {
+    id: newId("prn"),
+    finish,
+    status: "pending",
+    shipping: addressFromStripe(session),
+  };
+  album.updatedAt = new Date().toISOString();
+  await saveAlbum(album);
+  await recordPurchase(album, {
+    kind: bookPurchaseKind(finish),
+    label: `${finish} photo book (later)`,
+    amountUsd: laterBookUsd(finish),
+    creditsGranted: creditsForBook("later"),
+    stripeSessionId: session.id,
+  });
+  const next = (await loadAlbum(album.id)) || album;
+  if (next.status === "ready") {
+    return fulfillPrintIfNeeded(next);
+  }
+  return next;
 }
 

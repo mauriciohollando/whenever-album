@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { loadAlbum, saveAlbum, toPublicAlbum } from "@/lib/store";
-import { tokensMatch } from "@/lib/token";
+import { loadAccessibleAlbum } from "@/lib/access";
+import { saveAlbum, toPublicAlbum } from "@/lib/store";
 import { parseDraft } from "@/lib/validate";
 
 export const runtime = "nodejs";
@@ -20,11 +20,11 @@ export async function GET(
 ) {
   const { id } = await params;
   const token = tokenFrom(request);
-  const album = await loadAlbum(id);
-  if (!album || !tokensMatch(token, album.tokenHash)) {
+  const found = await loadAccessibleAlbum(id, token);
+  if (!found) {
     return NextResponse.json({ error: "Album not found." }, { status: 404 });
   }
-  return NextResponse.json({ album: toPublicAlbum(album) });
+  return NextResponse.json({ album: toPublicAlbum(found.album) });
 }
 
 export async function PATCH(
@@ -34,10 +34,11 @@ export async function PATCH(
   const { id } = await params;
   const body = (await request.json()) as Record<string, unknown>;
   const token = tokenFrom(request, body);
-  const album = await loadAlbum(id);
-  if (!album || !tokensMatch(token, album.tokenHash)) {
+  const found = await loadAccessibleAlbum(id, token);
+  if (!found) {
     return NextResponse.json({ error: "Album not found." }, { status: 404 });
   }
+  const album = found.album;
   if (album.status !== "draft") {
     return NextResponse.json({ error: "This album is already locked." }, { status: 409 });
   }

@@ -1,5 +1,16 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import { readSession } from "@/lib/auth";
 import { SITE_NAME } from "@/lib/site";
+
+async function AccountLink() {
+  const session = await readSession();
+  return (
+    <Link href="/account" className="hover:text-[var(--ink)]">
+      {session ? "Account" : "Sign in"}
+    </Link>
+  );
+}
 
 export function SiteHeader({ quiet = false }: { quiet?: boolean }) {
   return (
@@ -7,20 +18,27 @@ export function SiteHeader({ quiet = false }: { quiet?: boolean }) {
       <Link href="/" className="display text-[1.7rem] tracking-tight">
         When<span className="text-[var(--accent)]">ever</span>
       </Link>
-      {!quiet && (
-        <nav className="flex items-center gap-5 text-sm text-[var(--muted)]">
+      <nav className="flex items-center gap-5 text-sm text-[var(--muted)]">
+        {!quiet && (
           <a href="/#examples" className="hidden hover:text-[var(--ink)] sm:inline">
             Samples
           </a>
+        )}
+        <Suspense fallback={<Link href="/account">Sign in</Link>}>
+          <AccountLink />
+        </Suspense>
+        {!quiet && (
           <Link href="/make" className="btn-rust px-4 py-2.5 text-sm">
             <span className="sm:hidden">Start</span>
             <span className="hidden sm:inline">Make an album</span>
           </Link>
-        </nav>
-      )}
-      {quiet && (
-        <p className="text-xs uppercase tracking-[0.16em] text-[var(--muted)]">{SITE_NAME}</p>
-      )}
+        )}
+        {quiet && (
+          <p className="hidden text-xs uppercase tracking-[0.16em] text-[var(--muted)] sm:block">
+            {SITE_NAME}
+          </p>
+        )}
+      </nav>
     </header>
   );
 }

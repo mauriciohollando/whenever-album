@@ -30,7 +30,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             description:
               "Frank holds the baby like a football. Nora has flour on one wrist and will not admit it.",
             yearLabel: "1948",
-            imageUrl: null,
+            imageUrl: "/examples/callahan-sunday-shirts.png",
             members: ["Frank", "Nora", "Annie"],
           },
         ],
@@ -44,7 +44,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             title: "Borrowed oars",
             description: "They told the kids the canoe came with the house. It did not.",
             yearLabel: "1956",
-            imageUrl: null,
+            imageUrl: "/examples/callahan-borrowed-oars.png",
             members: ["Frank", "Tommy"],
           },
           {
@@ -52,7 +52,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             title: "Nora in the shade",
             description: "She packed four kinds of fruit and still asked if anyone was hungry.",
             yearLabel: "1956",
-            imageUrl: null,
+            imageUrl: "/examples/callahan-nora-shade.png",
             members: ["Nora"],
           },
         ],
@@ -78,7 +78,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             description:
               "Three cloaks, one questionable map, and a wheel of cheese that becomes a character.",
             yearLabel: "1091",
-            imageUrl: null,
+            imageUrl: "/examples/adler-provisions.png",
             members: ["Ida", "Levi"],
           },
         ],
@@ -93,7 +93,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             description:
               "That time we conquered the old city! (Ida is pointing at a goat. Levi is lost.)",
             yearLabel: "1099",
-            imageUrl: null,
+            imageUrl: "/examples/adler-jerusalem.png",
             members: ["Ida", "Levi", "Ruth"],
           },
           {
@@ -101,7 +101,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             title: "A very large dog",
             description: "Ruth maintains it was a lion. The lion maintains it was busy.",
             yearLabel: "1099",
-            imageUrl: null,
+            imageUrl: "/examples/adler-large-dog.png",
             members: ["Ruth"],
           },
         ],
@@ -127,7 +127,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             description:
               "Adaeze checks the sky the old way, with her eyes. Chidi is already packed.",
             yearLabel: "2076",
-            imageUrl: null,
+            imageUrl: "/examples/okafor-balcony.png",
             members: ["Adaeze", "Chidi"],
           },
         ],
@@ -141,7 +141,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             title: "Ordered clouds",
             description: "They paid extra for late-afternoon gold. The children ate the snacks first.",
             yearLabel: "2112",
-            imageUrl: null,
+            imageUrl: "/examples/okafor-clouds.png",
             members: ["Adaeze", "Kelechi", "Amaka"],
           },
           {
@@ -149,7 +149,7 @@ export const EXAMPLE_ALBUMS: ExampleAlbum[] = [
             title: "Chidi, still analog",
             description: "He brought a paper album onto an orbital tram and nobody stopped him.",
             yearLabel: "2112",
-            imageUrl: null,
+            imageUrl: "/examples/okafor-chidi.png",
             members: ["Chidi"],
           },
         ],

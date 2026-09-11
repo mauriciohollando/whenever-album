@@ -10,6 +10,7 @@
     "create-stripe": "node --env-file=.env.local scripts/create-stripe-product.mjs"
   },
   "dependencies": {
+    "@google/genai": "^2.22.0",
     "@vercel/blob": "^2.8.0",
     "next": "16.3.5",
     "openai": "^6.49.0",

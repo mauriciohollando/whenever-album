@@ -17,7 +17,7 @@ A twenty-page family album for any stretch of years — 500 BC, 1948, 2112, or t
 
 ## Stack
 
-Next.js App Router, Stripe Checkout, OpenAI (`gpt-4o-mini` for the album plan, `gpt-image-1` for photographs), Vercel Blob.
+Next.js App Router, Stripe Checkout, OpenAI (`gpt-4o-mini` for the album plan), **Nano Banana** (`gemini-2.5-flash-image`) for photographs, Vercel Blob.
 
 ## Local
 
@@ -50,7 +50,8 @@ Env on Production + Preview:
 | `STRIPE_SECRET_KEY` | Same live Stripe key |
 | `STRIPE_PRICE_ALBUM` | $20 one-time price |
 | `STRIPE_WEBHOOK_SECRET` | `checkout.session.completed` |
-| `OPENAI_API_KEY` | Plan + photographs |
+| `OPENAI_API_KEY` | Album plan (JSON) |
+| `GEMINI_API_KEY` | Nano Banana photographs |
 | `BLOB_READ_WRITE_TOKEN` | Uploads + generated images |
 | `NEXT_PUBLIC_SITE_URL` | Checkout return URLs |
 | `ALBUM_TOKEN_SECRET` | Album link tokens |

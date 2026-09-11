@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { EXAMPLE_ALBUMS, GUESTBOOK, REVIEWS } from "@/lib/examples";
 import { SITE_PRICE_USD } from "@/lib/site";
-import { PhotoPlate } from "./PhotoPlate";
 import { SiteFooter, SiteHeader } from "./SiteChrome";
+import { TappablePlates } from "./TappablePlates";
 
 export function LandingPage() {
   return (
@@ -38,9 +38,10 @@ export function LandingPage() {
             <div className="paper-grain p-5 sm:p-7">
               <p className="display text-3xl">The first spread</p>
               <p className="mt-1 text-sm text-[#5a4636]">Callahans · 1946–1968 · Queens</p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <PhotoPlate title="Sunday shirts" year="1948" tilt={-2} stain={0} />
-                <PhotoPlate title="Borrowed oars" year="1956" tilt={2.4} stain={1} />
+              <div className="mt-6">
+                <TappablePlates
+                  photos={EXAMPLE_ALBUMS[0].pages.flatMap((page) => page.photos).slice(0, 2)}
+                />
               </div>
               <p className="hand mt-5 text-xl text-[#5a4636]">
                 Frank holds the baby like a football. Nora has flour on one wrist.
@@ -81,7 +82,7 @@ export function LandingPage() {
             <h2 className="display text-4xl sm:text-5xl">Albums people have asked for</h2>
           </div>
           <div className="grid gap-8">
-            {EXAMPLE_ALBUMS.map((ex, i) => (
+            {EXAMPLE_ALBUMS.map((ex) => (
               <article key={ex.id} className="album-board p-4 sm:p-6">
                 <div className="paper-grain grid gap-6 p-5 lg:grid-cols-[0.9fr_1.1fr] lg:p-8">
                   <div>
@@ -98,17 +99,9 @@ export function LandingPage() {
                       ))}
                     </div>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {ex.pages.flatMap((page) => page.photos).slice(0, 4).map((photo, pi) => (
-                      <PhotoPlate
-                        key={photo.id}
-                        title={photo.title}
-                        year={photo.yearLabel}
-                        tilt={pi % 2 === 0 ? -1.8 : 2.1}
-                        stain={i * 2 + pi}
-                      />
-                    ))}
-                  </div>
+                  <TappablePlates
+                    photos={ex.pages.flatMap((page) => page.photos).slice(0, 4)}
+                  />
                 </div>
               </article>
             ))}

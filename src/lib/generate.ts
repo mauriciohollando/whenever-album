@@ -1,6 +1,7 @@
 import { toFile } from "openai";
-import { ALBUM_PAGE_COUNT } from "./site";
+import { geminiConfigured, generateGeminiPhotograph } from "./gemini";
 import { getOpenAI, imageModel, openaiConfigured } from "./openai";
+import { ALBUM_PAGE_COUNT } from "./site";
 import { storeBinary } from "./store";
 import type { Album, AlbumPage, AlbumPhoto } from "./types";
 import { formatWindow, formatYear, interpolateYears, periodHint } from "./years";
@@ -208,12 +209,12 @@ Page heading: ${page.heading}
 
 Photograph only. No captions, no borders, no typography, no watermark, no split-screen. One moment, one camera.`;
 
-  if (!openaiConfigured()) {
+  if (!geminiConfigured() && !openaiConfigured()) {
     page.photos[slot.photo] = { ...photo, imageUrl: null };
     return {
       ...album,
       status: "failed",
-      error: "OPENAI_API_KEY is not configured, so photographs cannot be developed.",
+      error: "No image model is configured (need GEMINI_API_KEY for Nano Banana).",
     };
   }
 
@@ -245,10 +246,29 @@ async function renderPhoto(
   albumId: string,
   photoId: string
 ): Promise<string> {
+  const refs = referenceUrls.slice(0, 4);
+  let buffer: Buffer | null = null;
+
+  if (geminiConfigured()) {
+    buffer = await generateGeminiPhotograph(prompt, refs);
+  } else {
+    buffer = await generateOpenAiPhotograph(prompt, refs);
+  }
+
+  const stored = await storeBinary(
+    `albums/${albumId}/photos/${photoId}.png`,
+    buffer,
+    "image/png"
+  );
+  return stored.url;
+}
+
+async function generateOpenAiPhotograph(
+  prompt: string,
+  refs: string[]
+): Promise<Buffer> {
   const openai = getOpenAI();
   const model = imageModel();
-  const refs = referenceUrls.slice(0, 4);
-
   let b64: string | undefined;
 
   if (refs.length > 0) {
@@ -289,21 +309,10 @@ async function renderPhoto(
     if (!b64 && legacy?.url) {
       const fetched = await fetch(legacy.url);
       if (!fetched.ok) throw new Error("Could not download generated photograph");
-      const stored = await storeBinary(
-        `albums/${albumId}/photos/${photoId}.png`,
-        Buffer.from(await fetched.arrayBuffer()),
-        "image/png"
-      );
-      return stored.url;
+      return Buffer.from(await fetched.arrayBuffer());
     }
   }
 
   if (!b64) throw new Error("Image model returned no photograph");
-
-  const stored = await storeBinary(
-    `albums/${albumId}/photos/${photoId}.png`,
-    Buffer.from(b64, "base64"),
-    "image/png"
-  );
-  return stored.url;
+  return Buffer.from(b64, "base64");
 }

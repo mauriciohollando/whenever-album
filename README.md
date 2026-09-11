@@ -2,7 +2,8 @@
 
 A twenty-page family album for any stretch of years — 500 BC, 1948, 2112, or the Tuesday in between.
 
-**Live:** after first deploy, `https://whenever-album.vercel.app`
+**Live:** https://whenever-album.vercel.app  
+**Repo:** https://github.com/mauriciohollando/whenever-album
 
 ## Product
 

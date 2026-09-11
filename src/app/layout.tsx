@@ -5,18 +5,21 @@ import "./globals.css";
 const display = Fraunces({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["600", "700"],
+  adjustFontFallback: false,
 });
 
 const body = Source_Serif_4({
   variable: "--font-body",
   subsets: ["latin"],
+  adjustFontFallback: false,
 });
 
 const hand = Caveat({
   variable: "--font-hand",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
